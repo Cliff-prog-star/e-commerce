@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retailer Registration - FASHION HUB</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .reg-page-wrapper {
+            max-width: 740px;
+            margin: 3rem auto;
+            padding: 0 1rem 4rem;
+        }
+
+        .reg-page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .reg-page-header h2 {
+            font-size: 1.9rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .reg-page-header p {
+            color: #666;
+        }
+
+        .already-verified-banner {
+            background: #e9f9ef;
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .already-verified-banner h3 {
+            color: #2e7d32;
+            margin-bottom: 0.5rem;
+        }
+
+        .already-verified-banner p {
+            color: #555;
+            margin-bottom: 1rem;
+        }
+
+        .reg-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+        }
+
+        /* Step progress bar */
+        .reg-progress {
+            display: flex;
+            gap: 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .reg-step-tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #aaa;
+            background: #f9f9f9;
+            border-right: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .reg-step-tab:last-child {
+            border-right: none;
+        }
+
+        .reg-step-tab.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .reg-step-tab.completed {
+            background: #e9f9ef;
+            color: #2e7d32;
+        }
+
+        /* Steps */
+        .reg-step {
+            display: none;
+        }
+
+        .reg-step.active {
+            display: block;
+        }
+
+        .reg-step h3 {
+            font-size: 1.25rem;
+            color: #333;
+            margin-bottom: 0.4rem;
+        }
+
+        .reg-step .step-subtitle {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Reuse base form styles from style.css; add specifics below */
+        .verification-notice {
+            background: #fff7e6;
+            border: 1px solid #ffcf66;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .verification-notice h4 {
+            margin-bottom: 0.75rem;
+            color: #7a5000;
+            font-size: 1rem;
+        }
+
+        .otp-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+
+        .otp-row input {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.65rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .verify-status {
+            font-size: 0.88rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }
+
+        .verify-status.ok {
+            color: #2e7d32;
+        }
+
+        .verify-status.fail {
+            color: #c62828;
+        }
+
+        /* Navigation buttons */
+        .reg-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+
+        .btn-reg-back {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid #ccc;
+            background: white;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #555;
+            transition: border-color 0.2s;
+        }
+
+        .btn-reg-back:hover {
+            border-color: #888;
+        }
+
+        .btn-reg-next {
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            flex: 1;
+        }
+
+        .btn-reg-next:hover {
+            opacity: 0.9;
+        }
+
+        .btn-reg-submit {
+            padding: 0.85rem 2rem;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            flex: 1;
+        }
+
+        .btn-reg-submit:hover {
+            opacity: 0.9;
+        }
+
+        .btn-ghost-sm {
+            padding: 0.55rem 1rem;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #555;
+            white-space: nowrap;
+            transition: border-color 0.2s;
+        }
+
+        .btn-ghost-sm:hover {
+            border-color: #10b981;
+            color: #10b981;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-start;
+            font-size: 0.95rem;
+            color: #444;
+            cursor: pointer;
+            line-height: 1.5;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-top: 3px;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #4caf50;
+            color: white;
+            padding: 0.9rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 9999;
+            animation: fadeInUp 0.3s ease;
+            max-width: 320px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .success-state {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .success-state .check-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-state h2 {
+            color: #2e7d32;
+            margin-bottom: 0.75rem;
+        }
+
+        .success-state p {
+            color: #555;
+            margin-bottom: 1.5rem;
+        }
+
+        footer {
+            background: #2a2a2a;
+            color: #ccc;
+            text-align: center;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+        }
+
+        footer a {
+            color: #10b981;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>👗 FASHION HUB</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Home</a></li>
+                    <li><a href="index.html#products">Shop</a></li>
+                    <li><a href="retailer_registration.html" style="opacity:0.8;">Sell</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="reg-page-wrapper">
+
+        <div class="reg-page-header">
+            <h2>Retailer Registration &amp; Verification</h2>
+            <p>Complete all three steps to become a verified seller and start posting products.</p>
+        </div>
+
+        <!-- Already verified state -->
+        <div id="already-verified-banner" class="already-verified-banner" style="display:none;">
+            <h3 id="verified-banner-title">&#10003; You are already verified!</h3>
+            <p id="verified-shop-label">Your shop account is active and you can post products.</p>
+            <a href="index.html#retailer" class="btn-reg-next" style="display:inline-block; text-decoration:none; padding:0.75rem 1.5rem; border-radius:8px;">Go to Seller Dashboard</a>
+            &nbsp;
+            <button onclick="resetVerification()" style="background:none; border:1px solid #c62828; color:#c62828; padding:0.7rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:600;">Reset Verification</button>
+        </div>
+
+        <!-- Registration wizard -->
+        <div id="registration-wizard" class="reg-card">
+
+            <!-- Step progress tabs -->
+            <div class="reg-progress">
+                <div class="reg-step-tab active" id="tab-1">1. Identity</div>
+                <div class="reg-step-tab" id="tab-2">2. Shop Info</div>
+                <div class="reg-step-tab" id="tab-3">3. Business Docs</div>
+            </div>
+
+            <!-- Step 1: Identity -->
+            <div class="reg-step active" data-step="1">
+                <h3>Personal Identification</h3>
+                <p class="step-subtitle">Provide your identity details so buyers can trust who they're buying from.</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="full-name">Full Name *</label>
+                        <input type="text" id="full-name" placeholder="John Kamau" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="national-id">National ID Number *</label>
+                        <input type="text" id="national-id" placeholder="e.g. 12345678" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id-photo">ID Photo Upload (Front) *</label>
+                        <input type="file" id="id-photo" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="selfie-photo">Selfie Photo *</label>
+                        <input type="file" id="selfie-photo" accept="image/*" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone-number">Phone Number *</label>
+                        <input type="tel" id="phone-number" placeholder="+254 700 000 000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email-address">Email Address *</label>
+                        <input type="email" id="email-address" placeholder="you@example.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="date-of-birth">Date of Birth *</label>
+                    <input type="date" id="date-of-birth" required>
+                </div>
+            </div>
+
+            <!-- Step 2: Shop Info -->
+            <div class="reg-step" data-step="2">
+                <h3>Shop Information</h3>
+                <p class="step-subtitle">Tell us about your shop so customers can find and trust you.</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="shop-name">Shop Name *</label>
+                        <input type="text" id="shop-name" placeholder="e.g. Kamau Fashion House" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="business-type">Business Type *</label>
+                        <select id="business-type" required>
+                            <option value="">Select Business Type</option>
+                            <option value="individual">Individual Seller</option>
+                            <option value="retail">Retail Shop</option>
+                            <option value="wholesale">Wholesale Trader</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="shop-county">County *</label>
+                        <input type="text" id="shop-county" placeholder="e.g. Nairobi" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shop-town">Town *</label>
+                        <input type="text" id="shop-town" placeholder="e.g. Eastleigh, Kamukunji" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="shop-address">Physical Shop Address *</label>
+                    <input type="text" id="shop-address" placeholder="Building, Floor, Room number or stall" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="shop-map">Google Maps Location (Optional)</label>
+                    <input type="url" id="shop-map" placeholder="https://maps.google.com/...">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="shop-photo">Shop Photo *</label>
+                        <input type="file" id="shop-photo" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signboard-photo">Shop Signboard Photo *</label>
+                        <input type="file" id="signboard-photo" accept="image/*" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Business Docs -->
+            <div class="reg-step" data-step="3">
+                <h3>Business Verification Documents</h3>
+                <p class="step-subtitle">Upload any available documents to increase trust and reduce fraud risks. These help verify your legitimacy.</p>
+
+                <div class="form-group">
+                    <label for="business-permit">Business Permit</label>
+                    <input type="file" id="business-permit" accept=".pdf,image/*">
+                </div>
+
+                <div class="form-group">
+                    <label for="kra-pin">KRA PIN Document</label>
+                    <input type="file" id="kra-pin" accept=".pdf,image/*">
+                </div>
+
+                <div class="form-group">
+                    <label for="business-certificate">Business Registration Certificate</label>
+                    <input type="file" id="business-certificate" accept=".pdf,image/*">
+                </div>
+
+                <div class="form-group checkbox-group" style="margin-top:1rem;">
+                    <label>
+                        <input type="checkbox" id="declaration" required>
+                        I confirm that all submitted details are accurate and truthful. I understand they may be used for fraud prevention and traceability checks.
+                    </label>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="reg-nav">
+                <button type="button" id="reg-back-btn" class="btn-reg-back" style="visibility:hidden;">&#8592; Back</button>
+                <button type="button" id="reg-next-btn" class="btn-reg-next">Next &#8594;</button>
+                <button type="button" id="reg-submit-btn" class="btn-reg-submit" style="display:none;">&#10003; Complete Verification</button>
+            </div>
+        </div>
+
+        <!-- Success state (shown after completion) -->
+        <div id="success-state" style="display:none;" class="reg-card">
+            <div class="success-state">
+                <div class="check-icon">&#10003;</div>
+                <h2>Verification Submitted!</h2>
+                <p>Your legitimacy documents have been submitted successfully. An admin must approve your account before you can post products.</p>
+                <a href="index.html#retailer" class="btn-reg-next" style="display:inline-block; text-decoration:none; padding:0.9rem 2rem; border-radius:8px;">
+                    Go to Seller Dashboard
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toast" class="toast-msg"></div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 FASHION HUB &mdash;
+                <a href="home.html">Home</a> &bull;
+                <a href="index.html#products">Shop</a> &bull;
+                <a href="about.html">About</a> &bull;
+                <a href="contact.html">Contact</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        /* -------- State -------- */
+        let currentStep = 1;
+
+        function loadVerification() {
+            try {
+                return JSON.parse(localStorage.getItem('retailerVerification') || 'null')
+                    || { phoneVerified: false, emailVerified: false, isApproved: false, reviewStatus: 'unverified', reviewNotes: '' };
+            } catch { return { phoneVerified: false, emailVerified: false, isApproved: false, reviewStatus: 'unverified', reviewNotes: '' }; }
+        }
+
+        function saveVerification(v) {
+            localStorage.setItem('retailerVerification', JSON.stringify(v));
+        }
+
+        let retailerVerification = loadVerification();
+
+        /* -------- API helper -------- */
+        async function apiCall(endpoint, options = {}) {
+            const url = `backend/api/${endpoint}`;
+            let res;
+            try {
+                res = await fetch(url, {
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+                    ...options,
+                });
+            } catch (error) {
+                if (window.location.protocol === 'file:') {
+                    throw new Error('Network error: run the project through a local server (e.g. php -S 127.0.0.1:8000) and open http://127.0.0.1:8000/retailer_registration.html.');
+                }
+                throw new Error(`Network error: could not reach ${url}. Ensure your PHP server is running and backend/api is accessible.`);
+            }
+
+            const raw = await res.text();
+            let payload = null;
+
+            if (raw) {
+                try {
+                    payload = JSON.parse(raw);
+                } catch {
+                    const phpLimitHint = /post_max_size|content-length|request entity too large|payload too large/i.test(raw);
+                    if (res.status === 413 || phpLimitHint) {
+                        throw new Error('Upload is too large for the server limit. Reduce file size or increase PHP post_max_size.');
+                    }
+                    const preview = raw.slice(0, 180).replace(/\s+/g, ' ').trim();
+                    throw new Error(`Server returned ${res.status} with a non-JSON response from ${url}. ${preview ? `Response preview: ${preview}` : ''}`.trim());
+                }
+            }
+
+            if (!res.ok) {
+                throw new Error(payload?.message || `Request failed with status ${res.status}.`);
+            }
+
+            return payload || { status: 'ok', data: {} };
+        }
+
+        function hydrateEmailVerificationFromUrl() {
+            // Email verification removed for simplified flow
+        }
+
+        /* -------- Toast -------- */
+        function showToast(msg, color) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = color || '#4caf50';
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        /* -------- Step rendering -------- */
+        function renderStep() {
+            document.querySelectorAll('.reg-step').forEach(s => {
+                s.classList.toggle('active', parseInt(s.dataset.step, 10) === currentStep);
+            });
+
+            for (let i = 1; i <= 3; i++) {
+                const tab = document.getElementById(`tab-${i}`);
+                tab.classList.remove('active', 'completed');
+                if (i < currentStep) tab.classList.add('completed');
+                else if (i === currentStep) tab.classList.add('active');
+            }
+
+            document.getElementById('reg-back-btn').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+            document.getElementById('reg-next-btn').style.display = currentStep === 3 ? 'none' : 'inline-block';
+            document.getElementById('reg-submit-btn').style.display = currentStep === 3 ? 'inline-block' : 'none';
+        }
+
+        /* -------- Validation -------- */
+        function validateStep(step) {
+            const stepEl = document.querySelector(`.reg-step[data-step="${step}"]`);
+            const required = stepEl.querySelectorAll('[required]');
+
+            for (const field of required) {
+                if (field.type === 'checkbox' && !field.checked) {
+                    alert('Please accept the declaration checkbox before continuing.');
+                    field.focus();
+                    return false;
+                }
+                if (field.type === 'file' && field.files.length === 0) {
+                    alert('Please upload all required files before continuing.');
+                    field.focus();
+                    return false;
+                }
+                if (field.type !== 'checkbox' && field.type !== 'file' && !field.value.trim()) {
+                    alert('Please complete all required fields before continuing.');
+                    field.focus();
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        async function readFileInputAsDataUrl(inputId, required = false) {
+            const input = document.getElementById(inputId);
+            const file = input?.files?.[0] || null;
+            const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+
+            if (!file) {
+                if (required) {
+                    throw new Error(`${inputId} is required.`);
+                }
+                return '';
+            }
+
+            if (file.size > MAX_UPLOAD_BYTES) {
+                throw new Error(`${inputId} is too large. Max size is 2MB.`);
+            }
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(String(e.target?.result || ''));
+                reader.onerror = () => reject(new Error(`Failed to read ${inputId}.`));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        /* OTP / Email verification functions removed - using direct verification instead */
+
+        /* -------- Navigation -------- */
+        document.getElementById('reg-next-btn').addEventListener('click', function () {
+            if (!validateStep(currentStep)) return;
+            if (currentStep < 3) {
+                currentStep++;
+                renderStep();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        document.getElementById('reg-back-btn').addEventListener('click', function () {
+            if (currentStep > 1) {
+                currentStep--;
+                renderStep();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        /* -------- Submit -------- */
+        document.getElementById('reg-submit-btn').addEventListener('click', async function () {
+            if (!validateStep(3)) return;
+
+            let documents;
+            try {
+                documents = {
+                    id_photo: await readFileInputAsDataUrl('id-photo', true),
+                    selfie_photo: await readFileInputAsDataUrl('selfie-photo', true),
+                    shop_photo: await readFileInputAsDataUrl('shop-photo', true),
+                    signboard_photo: await readFileInputAsDataUrl('signboard-photo', true),
+                    business_permit: await readFileInputAsDataUrl('business-permit'),
+                    kra_pin: await readFileInputAsDataUrl('kra-pin'),
+                    business_certificate: await readFileInputAsDataUrl('business-certificate'),
+                };
+            } catch (error) {
+                alert(error.message || 'Please upload all required verification documents.');
+                return;
+            }
+
+            const formData = {
+                full_name:     document.getElementById('full-name').value.trim(),
+                national_id:   document.getElementById('national-id').value.trim(),
+                phone:         document.getElementById('phone-number').value.trim(),
+                email:         document.getElementById('email-address').value.trim(),
+                date_of_birth: document.getElementById('date-of-birth').value,
+                shop_name:     document.getElementById('shop-name').value.trim(),
+                business_type: document.getElementById('business-type').value,
+                county:        document.getElementById('shop-county').value.trim(),
+                town:          document.getElementById('shop-town').value.trim(),
+                shop_address:  document.getElementById('shop-address').value.trim(),
+                shop_map_url:  document.getElementById('shop-map').value.trim(),
+                documents,
+            };
+
+            try {
+                const res = await apiCall('retailers/register.php', {
+                    method: 'POST',
+                    body: JSON.stringify(formData),
+                });
+                if (res.status === 'ok') {
+                    retailerVerification.isApproved = false;
+                    retailerVerification.shopName = formData.shop_name;
+                    retailerVerification.retailerId = res.data.retailer_id;
+                    retailerVerification.reviewStatus = res.data.review_status || 'pending';
+                } else {
+                    alert(res.message || 'Registration failed. Please try again.');
+                    return;
+                }
+            } catch (error) {
+                alert(error?.message || 'Registration failed. Please try again.');
+                return;
+            }
+
+            saveVerification(retailerVerification);
+
+            // Hide wizard, show success
+            document.getElementById('registration-wizard').style.display = 'none';
+            document.getElementById('success-state').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('Verification submitted for admin review. Redirecting…');
+
+            setTimeout(() => {
+                window.location.href = 'index.html#retailer';
+            }, 2500);
+        });
+
+        /* -------- Reset (for testing) -------- */
+        function resetVerification() {
+            if (!confirm('This will clear your verification status. Are you sure?')) return;
+            localStorage.removeItem('retailerVerification');
+            retailerVerification = loadVerification();
+            document.getElementById('already-verified-banner').style.display = 'none';
+            document.getElementById('registration-wizard').style.display = 'block';
+            currentStep = 1;
+            renderStep();
+        }
+
+        /* -------- Init -------- */
+        document.addEventListener('DOMContentLoaded', async function () {
+            const clientSession = JSON.parse(localStorage.getItem('fashionClientSession') || 'null');
+            if (!clientSession || !clientSession.email) {
+                alert('Please log in as a client on the front page before starting retailer verification.');
+                window.location.href = 'index.html#client-access';
+                return;
+            }
+
+            hydrateEmailVerificationFromUrl();
+
+            // Check live session status from API first
+            try {
+                const res = await apiCall('retailers/status.php');
+                if (res.status === 'ok' && res.data) {
+                    retailerVerification.isApproved = !!res.data.is_approved;
+                    retailerVerification.reviewStatus = res.data.review_status || 'unverified';
+                    retailerVerification.reviewNotes = res.data.review_notes || '';
+                    retailerVerification.shopName = res.data.shop_name || retailerVerification.shopName;
+                    retailerVerification.retailerId = res.data.retailer_id;
+                    saveVerification(retailerVerification);
+                }
+            } catch { /* use localStorage state */ }
+
+            if (retailerVerification.isApproved || retailerVerification.reviewStatus === 'pending' || retailerVerification.reviewStatus === 'rejected') {
+                document.getElementById('already-verified-banner').style.display = 'block';
+                document.getElementById('registration-wizard').style.display = 'none';
+                const bannerTitle = document.getElementById('verified-banner-title');
+                if (retailerVerification.reviewStatus === 'pending') {
+                    bannerTitle.textContent = 'Verification under review';
+                    document.getElementById('verified-shop-label').textContent =
+                        `Shop: "${retailerVerification.shopName || 'Pending shop'}" — your legitimacy documents are pending admin review.`;
+                } else if (retailerVerification.reviewStatus === 'rejected') {
+                    bannerTitle.textContent = 'Verification rejected';
+                    document.getElementById('verified-shop-label').textContent = retailerVerification.reviewNotes
+                        ? `Verification rejected: ${retailerVerification.reviewNotes}`
+                        : 'Verification rejected. Please contact support to re-submit your legitimacy documents.';
+                } else if (retailerVerification.shopName) {
+                    bannerTitle.textContent = '✓ You are already verified!';
+                    document.getElementById('verified-shop-label').textContent =
+                        `Shop: "${retailerVerification.shopName}" — your account is active and ready.`;
+                }
+            }
+            renderStep();
+        });
+    </script>
+
+</body>
+</html>

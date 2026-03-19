@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - FASHION HUB</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .about-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .about-hero h2 {
+            font-size: 2.4rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .about-hero p {
+            max-width: 640px;
+            margin: 0 auto;
+            opacity: 0.92;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .about-section {
+            padding: 3.5rem 0;
+        }
+
+        .about-section.alt-bg {
+            background: #f8f9fa;
+        }
+
+        .about-section h3 {
+            font-size: 1.7rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .about-section .section-lead {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            max-width: 680px;
+        }
+
+        /* Two column layout for How It Works */
+        .how-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 680px) {
+            .how-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .how-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.8rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        }
+
+        .how-card .icon {
+            font-size: 2.2rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .how-card h4 {
+            font-size: 1.15rem;
+            margin-bottom: 0.4rem;
+            color: #333;
+        }
+
+        .how-card p {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Steps list */
+        .steps-list {
+            list-style: none;
+            padding: 0;
+            counter-reset: steps;
+        }
+
+        .steps-list li {
+            counter-increment: steps;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            margin-bottom: 1.2rem;
+        }
+
+        .steps-list li::before {
+            content: counter(steps);
+            background: #667eea;
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .steps-list li p {
+            color: #555;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .steps-list li strong {
+            display: block;
+            color: #333;
+            margin-bottom: 0.15rem;
+        }
+
+        /* Values / stats row */
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .value-card {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        }
+
+        .value-card .value-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .value-card h4 {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 0.4rem;
+        }
+
+        .value-card p {
+            color: #777;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Mission statement */
+        .mission-block {
+            background: linear-gradient(135deg, #667eea11, #764ba211);
+            border-left: 5px solid #667eea;
+            border-radius: 0 12px 12px 0;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .mission-block p {
+            font-size: 1.1rem;
+            color: #444;
+            line-height: 1.75;
+            font-style: italic;
+        }
+
+        /* CTA section */
+        .about-cta {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .about-cta h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .about-cta p {
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .about-cta-btns {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-cta-white {
+            background: white;
+            color: #667eea;
+            padding: 0.85rem 1.8rem;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn-cta-white:hover {
+            opacity: 0.9;
+        }
+
+        .btn-cta-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            padding: 0.85rem 1.8rem;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-cta-outline:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        footer {
+            background: #2a2a2a;
+            color: #ccc;
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>👗 FASHION HUB</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Home</a></li>
+                    <li><a href="index.html#products">Shop</a></li>
+                    <li><a href="retailer_registration.html">Sell</a></li>
+                    <li><a href="about.html" style="opacity:0.8;">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="about-hero">
+        <div class="container">
+            <h2>About FASHION HUB</h2>
+            <p>A trusted, retailer-driven clothing marketplace built to connect verified African fashion sellers with buyers across the continent and beyond.</p>
+        </div>
+    </section>
+
+    <!-- Mission -->
+    <section class="about-section">
+        <div class="container">
+            <h3>Our Mission</h3>
+            <div class="mission-block">
+                <p>"To reduce fraud in online fashion retail by verifying every seller's identity, shop, and contact details — giving buyers confidence and giving honest retailers a platform they deserve."</p>
+            </div>
+            <p style="color:#555; line-height:1.8; max-width:740px;">
+                FASHION HUB was built because informal fashion retail in East Africa is thriving but trust is a major barrier. Buyers don't know who they're buying from, and scammers exploit that gap. Our answer is a rigorous, multi-step retailer verification system — every single seller you see here has verified their national ID, phone, email, shop address, and business details.
+            </p>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="about-section alt-bg">
+        <div class="container">
+            <h3>How It Works</h3>
+            <p class="section-lead">Two sides of the same marketplace — one for buyers browsing great fashion, one for retailers growing their business.</p>
+
+            <div class="how-grid">
+                <!-- Buyers -->
+                <div class="how-card">
+                    <div class="icon">🛍️</div>
+                    <h4>For Buyers</h4>
+                    <ol class="steps-list">
+                        <li>
+                            <p><strong>Browse the marketplace</strong>
+                            Filter by category (Men, Women, Kids), search by name, or sort by price.</p>
+                        </li>
+                        <li>
+                            <p><strong>View product details</strong>
+                            Every listing includes a full description, available sizes, price, and the verified retailer's shop name.</p>
+                        </li>
+                        <li>
+                            <p><strong>Add to cart &amp; checkout</strong>
+                            Select your size, add items to your cart, and proceed to purchase with confidence.</p>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Retailers -->
+                <div class="how-card">
+                    <div class="icon">🏪</div>
+                    <h4>For Retailers</h4>
+                    <ol class="steps-list">
+                        <li>
+                            <p><strong>Register &amp; get verified</strong>
+                            Complete our 3-step identity, shop, and document verification process.</p>
+                        </li>
+                        <li>
+                            <p><strong>Verify your contacts</strong>
+                            Both your phone (OTP) and email must be confirmed before your account is active.</p>
+                        </li>
+                        <li>
+                            <p><strong>Post products</strong>
+                            Once approved, use the seller dashboard to list clothes by category. Your shop name appears on every listing.</p>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our values -->
+    <section class="about-section">
+        <div class="container">
+            <h3>Our Core Values</h3>
+            <p class="section-lead">Everything we build is driven by these principles.</p>
+
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">🛡️</div>
+                    <h4>Trust &amp; Transparency</h4>
+                    <p>Every retailer is verified. Buyers always know who they're buying from — no anonymous listings.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🤝</div>
+                    <h4>Fair Access</h4>
+                    <p>Individual sellers, retail shops, and wholesalers all get equal access to list their products.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">📍</div>
+                    <h4>Local First</h4>
+                    <p>Built for the Kenyan and East African FASHION HUB — including county, town, and address verification.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🔒</div>
+                    <h4>Anti-Scam Design</h4>
+                    <p>Multi-layer verification (ID, phone OTP, email, shop photo, business docs) makes fraud much harder.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Verification explained -->
+    <section class="about-section alt-bg">
+        <div class="container">
+            <h3>The Verification Process</h3>
+            <p class="section-lead">Our 3-step verification ensures every listed seller is real and traceable.</p>
+
+            <div class="how-grid">
+                <div class="how-card">
+                    <div class="icon">🪪</div>
+                    <h4>Step 1 — Identity</h4>
+                    <p>Sellers submit their full name, National ID number, ID photo, selfie, phone number, email, and date of birth. Both phone (OTP) and email must be confirmed before moving forward.</p>
+                </div>
+                <div class="how-card">
+                    <div class="icon">🏬</div>
+                    <h4>Step 2 — Shop Info</h4>
+                    <p>Retailers provide their shop name, business type, county, town, physical address, an optional Google Maps link, and photos of the shop and signboard.</p>
+                </div>
+                <div class="how-card">
+                    <div class="icon">📄</div>
+                    <h4>Step 3 — Business Documents</h4>
+                    <p>Sellers can upload a Business Permit, KRA PIN document, and Business Registration Certificate. A declaration is required confirming all info is accurate.</p>
+                </div>
+                <div class="how-card">
+                    <div class="icon">✅</div>
+                    <h4>Approved Status</h4>
+                    <p>Only after all three steps are validated does the seller receive an approved status. Product posting is disabled for unverified accounts.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="about-cta">
+        <div class="container">
+            <h3>Ready to Join the Marketplace?</h3>
+            <p>Start browsing verified retailers or register your shop today.</p>
+            <div class="about-cta-btns">
+                <a href="index.html#products" class="btn-cta-white">Browse Products</a>
+                <a href="retailer_registration.html" class="btn-cta-outline">Register as Retailer</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 FASHION HUB &mdash;
+                <a href="home.html">Home</a> &bull;
+                <a href="index.html#products">Shop</a> &bull;
+                <a href="retailer_registration.html">Sell</a> &bull;
+                <a href="contact.html">Contact</a>
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>

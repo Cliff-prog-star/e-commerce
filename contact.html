@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - FASHION HUB</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .contact-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3.5rem 0;
+            text-align: center;
+        }
+
+        .contact-hero h2 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-hero p {
+            opacity: 0.9;
+            font-size: 1.05rem;
+        }
+
+        .contact-section {
+            padding: 3rem 0 5rem;
+        }
+
+        .contact-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 2.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 700px) {
+            .contact-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Info panel */
+        .contact-info-card {
+            background: white;
+            border-radius: 14px;
+            padding: 2rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+        }
+
+        .contact-info-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .info-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-item .info-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .info-item h4 {
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 0.2rem;
+        }
+
+        .info-item p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .contact-info-card .divider {
+            border: none;
+            border-top: 1px solid #f0f0f0;
+            margin: 1.5rem 0;
+        }
+
+        .faq-item {
+            margin-bottom: 1.2rem;
+        }
+
+        .faq-item h4 {
+            font-size: 0.95rem;
+            color: #444;
+            margin-bottom: 0.25rem;
+        }
+
+        .faq-item p {
+            font-size: 0.88rem;
+            color: #777;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Contact form card */
+        .contact-form-card {
+            background: white;
+            border-radius: 14px;
+            padding: 2rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+        }
+
+        .contact-form-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .contact-form-card .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .contact-form-card label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+            color: #444;
+        }
+
+        .contact-form-card input,
+        .contact-form-card select,
+        .contact-form-card textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            background: #fafafa;
+        }
+
+        .contact-form-card input:focus,
+        .contact-form-card select:focus,
+        .contact-form-card textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .contact-form-card textarea {
+            resize: vertical;
+            min-height: 140px;
+        }
+
+        .btn-send {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-send:hover {
+            opacity: 0.9;
+        }
+
+        .success-message {
+            display: none;
+            background: #e9f9ef;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .success-message .check {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .success-message h4 {
+            color: #2e7d32;
+            margin-bottom: 0.4rem;
+        }
+
+        .success-message p {
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .char-count {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-align: right;
+            margin-top: 0.2rem;
+        }
+
+        footer {
+            background: #2a2a2a;
+            color: #ccc;
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>👗 FASHION HUB</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="home.html">Home</a></li>
+                    <li><a href="index.html#products">Shop</a></li>
+                    <li><a href="retailer_registration.html">Sell</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html" style="opacity:0.8;">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="contact-hero">
+        <div class="container">
+            <h2>Contact Us</h2>
+            <p>Have a question, a complaint, or a suggestion? We'd love to hear from you.</p>
+        </div>
+    </section>
+
+    <section class="contact-section">
+        <div class="container">
+            <div class="contact-layout">
+
+                <!-- Left: info -->
+                <div class="contact-info-card">
+                    <h3>Get in Touch</h3>
+
+                    <div class="info-item">
+                        <div class="info-icon">📧</div>
+                        <div>
+                            <h4>Email</h4>
+                            <p>support@fashionmarketplace.co.ke</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">📞</div>
+                        <div>
+                            <h4>Phone</h4>
+                            <p>+254 700 000 000<br>Mon–Fri, 8am – 6pm EAT</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">📍</div>
+                        <div>
+                            <h4>Location</h4>
+                            <p>Nairobi, Kenya<br>Eastleigh Section II</p>
+                        </div>
+                    </div>
+
+                    <hr class="divider">
+
+                    <h3 style="font-size:1rem; margin-bottom:1rem;">Frequently Asked Questions</h3>
+
+                    <div class="faq-item">
+                        <h4>How do I become a verified retailer?</h4>
+                        <p>Go to the <a href="retailer_registration.html" style="color:#667eea;">Sell page</a> and complete the 3-step verification.</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h4>Can I report a suspicious seller?</h4>
+                        <p>Yes — use the contact form and select "Report a Seller" as the subject.</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h4>Why is my verification not working?</h4>
+                        <p>Make sure both your phone OTP and email are verified before clicking Next on Step 1.</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h4>Is there a fee to list products?</h4>
+                        <p>No. Listing products is completely free for verified retailers.</p>
+                    </div>
+                </div>
+
+                <!-- Right: form -->
+                <div class="contact-form-card">
+                    <h3>Send Us a Message</h3>
+
+                    <form id="contact-form" novalidate>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="contact-name">Your Name *</label>
+                                <input type="text" id="contact-name" placeholder="John Kamau" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-email">Email Address *</label>
+                                <input type="email" id="contact-email" placeholder="you@example.com" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact-subject">Subject *</label>
+                            <select id="contact-subject" required>
+                                <option value="">Select a subject</option>
+                                <option value="general">General Inquiry</option>
+                                <option value="retailer-help">Retailer Registration Help</option>
+                                <option value="report-seller">Report a Seller</option>
+                                <option value="product-issue">Product / Order Issue</option>
+                                <option value="account">Account &amp; Verification</option>
+                                <option value="feedback">Feedback &amp; Suggestions</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact-message">Message *</label>
+                            <textarea id="contact-message" placeholder="Describe your question or issue in detail…" maxlength="1000" required></textarea>
+                            <p class="char-count"><span id="char-remaining">1000</span> characters remaining</p>
+                        </div>
+
+                        <button type="submit" class="btn-send">&#9993; Send Message</button>
+                    </form>
+
+                    <div class="success-message" id="success-message">
+                        <div class="check">&#10003;</div>
+                        <h4>Message Sent!</h4>
+                        <p>Thank you for reaching out. We'll get back to you within 24 hours.</p>
+                        <button onclick="resetForm()" style="margin-top:1rem; background:none; border:1px solid #4caf50; color:#2e7d32; padding:0.6rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:600;">Send Another</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 FASHION HUB &mdash;
+                <a href="home.html">Home</a> &bull;
+                <a href="index.html#products">Shop</a> &bull;
+                <a href="retailer_registration.html">Sell</a> &bull;
+                <a href="about.html">About</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        /* Character countdown for message textarea */
+        const messageEl = document.getElementById('contact-message');
+        const charCountEl = document.getElementById('char-remaining');
+
+        messageEl.addEventListener('input', function () {
+            charCountEl.textContent = 1000 - this.value.length;
+        });
+
+        /* Form submit — sends to PHP API */
+        document.getElementById('contact-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const name    = document.getElementById('contact-name').value.trim();
+            const email   = document.getElementById('contact-email').value.trim();
+            const subject = document.getElementById('contact-subject').value;
+            const message = document.getElementById('contact-message').value.trim();
+
+            if (!name) {
+                alert('Please enter your name.');
+                document.getElementById('contact-name').focus();
+                return;
+            }
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address.');
+                document.getElementById('contact-email').focus();
+                return;
+            }
+            if (!subject) {
+                alert('Please select a subject.');
+                document.getElementById('contact-subject').focus();
+                return;
+            }
+            if (!message || message.length < 10) {
+                alert('Please write a message of at least 10 characters.');
+                document.getElementById('contact-message').focus();
+                return;
+            }
+
+            try {
+                const res = await fetch('backend/api/contact/send.php', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, subject, message }),
+                });
+                const data = await res.json();
+                if (data.status !== 'ok') {
+                    alert(data.message || 'Failed to send message. Please try again.');
+                    return;
+                }
+            } catch {
+                alert('Failed to send message. Please check your connection and try again.');
+                return;
+            }
+
+            /* Hide form, show success */
+            document.getElementById('contact-form').style.display = 'none';
+            document.getElementById('success-message').style.display = 'block';
+        });
+
+        function resetForm() {
+            document.getElementById('contact-form').reset();
+            document.getElementById('char-remaining').textContent = '1000';
+            document.getElementById('contact-form').style.display = 'block';
+            document.getElementById('success-message').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>

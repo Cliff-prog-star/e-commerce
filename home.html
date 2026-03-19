@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>FASHION HUB - Home</title>
+	<link rel="stylesheet" href="style.css">
+	<style>
+		.home-hero {
+			background: linear-gradient(135deg, #1f4d7a 0%, #0d2236 100%);
+			color: #fff;
+			padding: 4rem 0;
+			text-align: center;
+		}
+
+		.home-hero h2 {
+			font-size: 2.4rem;
+			margin-bottom: 0.75rem;
+		}
+
+		.home-hero p {
+			max-width: 680px;
+			margin: 0 auto;
+			opacity: 0.95;
+		}
+
+		.home-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+			gap: 1rem;
+		}
+
+		.home-card {
+			background: #fff;
+			border: 1px solid #e6e6e6;
+			border-radius: 12px;
+			padding: 1.2rem;
+			box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+		}
+
+		.home-section {
+			padding: 3rem 0;
+		}
+
+		.home-section h3 {
+			margin-bottom: 0.6rem;
+			font-size: 1.6rem;
+		}
+
+		.home-section p.section-lead {
+			margin-bottom: 1.5rem;
+			color: #5a5a5a;
+		}
+
+		.category-tag {
+			display: inline-block;
+			margin-bottom: 0.7rem;
+			padding: 0.35rem 0.8rem;
+			border-radius: 16px;
+			font-size: 0.85rem;
+			font-weight: 600;
+			background: #e7f1fb;
+			color: #1f4d7a;
+		}
+
+		.home-actions {
+			display: flex;
+			gap: 0.8rem;
+			margin-top: 1.5rem;
+			flex-wrap: wrap;
+			justify-content: center;
+		}
+
+		.home-cta {
+			display: inline-block;
+			text-decoration: none;
+			background: #1f4d7a;
+			color: #fff;
+			padding: 0.8rem 1.2rem;
+			border-radius: 8px;
+			font-weight: 600;
+		}
+
+		.home-cta.secondary {
+			background: #fff;
+			border: 1px solid #1f4d7a;
+			color: #1f4d7a;
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<div class="container">
+			<div class="logo">
+				<h1>FASHION HUB</h1>
+			</div>
+			<nav>
+				<ul>
+					<li><a href="home.html">Home</a></li>
+					<li><a href="index.html#products">Shop</a></li>
+					<li><a href="retailer_registration.html">Sell</a></li>
+					<li><a href="about.html">About</a></li>
+					<li><a href="contact.html">Contact</a></li>
+				</ul>
+			</nav>
+		</div>
+	</header>
+
+	<section class="home-hero">
+		<div class="container">
+			<h2>Retailer-Driven FASHION HUB</h2>
+			<p>Featured clothes and categories are populated by verified retailers when they post products on the platform.</p>
+			<div class="home-actions">
+				<a class="home-cta" href="index.html#products">Browse Posted Clothes</a>
+				<a class="home-cta secondary" href="index.html#retailer">Retailer Registration</a>
+			</div>
+		</div>
+	</section>
+
+	<section class="home-section">
+		<div class="container">
+			<h3>Featured Clothes</h3>
+			<p class="section-lead">Only clothes posted by verified retailers appear here.</p>
+			<div class="home-grid">
+				<article class="home-card">
+					<span class="category-tag">Retailer Feed</span>
+					<h4>No featured clothes yet</h4>
+					<p>As soon as retailers post products, featured items will show in this section.</p>
+					<a class="home-cta secondary" href="index.html#products">View Product Feed</a>
+				</article>
+			</div>
+		</div>
+	</section>
+
+	<section class="home-section" style="background: #f8f9fa;">
+		<div class="container">
+			<h3>Categories</h3>
+			<p class="section-lead">Retailers post clothes under these categories.</p>
+
+			<div class="home-grid">
+				<article class="home-card">
+					<span class="category-tag">Men</span>
+					<h4>Men's Clothing</h4>
+					<p>Shirts, trousers, jackets, and more from verified sellers.</p>
+					<a class="home-cta secondary" href="index.html#products">Shop Men</a>
+				</article>
+
+				<article class="home-card">
+					<span class="category-tag">Women</span>
+					<h4>Women's Clothing</h4>
+					<p>Dresses, tops, outerwear, and accessories posted by retailers.</p>
+					<a class="home-cta secondary" href="index.html#products">Shop Women</a>
+				</article>
+
+				<article class="home-card">
+					<span class="category-tag">Kids</span>
+					<h4>Kids' Clothing</h4>
+					<p>Comfortable and stylish clothing options listed by trusted shops.</p>
+					<a class="home-cta secondary" href="index.html#products">Shop Kids</a>
+				</article>
+			</div>
+		</div>
+	</section>
+</body>
+</html>

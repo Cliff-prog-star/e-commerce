@@ -1,0 +1,13 @@
+# Environment secrets
+.env
+
+# Uploaded product images (runtime data)
+backend/uploads/products/*
+!backend/uploads/products/.gitkeep
+!backend/uploads/products/.htaccess
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json

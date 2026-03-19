@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FASHION HUB - Admin Review</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background: #f7f8fc; }
+        .admin-wrap { max-width: 1200px; margin: 2rem auto 4rem; padding: 0 1rem; }
+        .admin-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+        .admin-card { background:#fff; border-radius:16px; padding:1.25rem; box-shadow:0 10px 30px rgba(0,0,0,0.08); margin-bottom:1rem; }
+        .doc-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-top:1rem; }
+        .doc-card { border:1px solid #e5e7eb; border-radius:12px; padding:0.8rem; background:#fafafa; }
+        .doc-card img { width:100%; height:140px; object-fit:cover; border-radius:10px; display:block; margin-bottom:0.5rem; }
+        .actions { display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1rem; }
+        .actions button, .toolbar button, .toolbar select { padding:0.75rem 1rem; border-radius:10px; border:none; font-weight:600; }
+        .approve { background:#15803d; color:#fff; }
+        .reject { background:#b91c1c; color:#fff; }
+        .toolbar { display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center; }
+        textarea { width:100%; min-height:90px; padding:0.8rem; border:1px solid #d1d5db; border-radius:12px; margin-top:0.8rem; }
+        .muted { color:#6b7280; }
+        .pill { display:inline-block; padding:0.25rem 0.65rem; border-radius:999px; font-size:0.85rem; font-weight:700; text-transform:capitalize; }
+        .pill.pending { background:#fef3c7; color:#92400e; }
+        .pill.approved { background:#dcfce7; color:#166534; }
+        .pill.rejected { background:#fee2e2; color:#991b1b; }
+    </style>
+</head>
+<body>
+    <div class="admin-wrap">
+        <div class="admin-header">
+            <div>
+                <h1>FASHION HUB Admin Review</h1>
+                <p class="muted">Review legitimacy documents and approve or reject retailer accounts.</p>
+            </div>
+            <div class="toolbar">
+                <select id="status-filter">
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="all">All</option>
+                </select>
+                <button id="set-key-btn">Set Admin Key</button>
+                <button id="refresh-btn">Refresh</button>
+            </div>
+        </div>
+        <div id="admin-message" class="admin-card muted">Set your admin review key to load retailer submissions.</div>
+        <div id="retailer-list"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'backend/api/admin/retailers';
+
+        function getAdminKey() {
+            return sessionStorage.getItem('fashionHubAdminKey') || '';
+        }
+
+        function setAdminKey() {
+            const key = prompt('Enter admin review key:');
+            if (key) {
+                sessionStorage.setItem('fashionHubAdminKey', key.trim());
+                loadRetailers();
+            }
+        }
+
+        async function adminCall(endpoint, options = {}) {
+            const res = await fetch(`${API_BASE}/${endpoint}`, {
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Key': getAdminKey(),
+                    ...(options.headers || {}),
+                },
+                ...options,
+            });
+            return res.json();
+        }
+
+        function showMessage(message, isError = false) {
+            const el = document.getElementById('admin-message');
+            el.textContent = message;
+            el.style.color = isError ? '#b91c1c' : '#6b7280';
+        }
+
+        function renderDocuments(documents) {
+            if (!documents.length) {
+                return '<p class="muted">No documents uploaded.</p>';
+            }
+            return `<div class="doc-grid">${documents.map(doc => {
+                const isImage = doc.mime_type.startsWith('image/');
+                return `
+                    <div class="doc-card">
+                        ${isImage ? `<img src="${doc.file_path}" alt="${doc.document_type}">` : ''}
+                        <strong>${doc.document_type.replace(/_/g, ' ')}</strong>
+                        <p class="muted">${doc.mime_type}</p>
+                        <a href="${doc.file_path}" target="_blank" rel="noopener">Open file</a>
+                    </div>
+                `;
+            }).join('')}</div>`;
+        }
+
+        function renderRetailers(retailers) {
+            const container = document.getElementById('retailer-list');
+            if (!retailers.length) {
+                container.innerHTML = '<div class="admin-card muted">No retailer applications found for this filter.</div>';
+                return;
+            }
+
+            container.innerHTML = retailers.map(retailer => `
+                <div class="admin-card">
+                    <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:start;">
+                        <div>
+                            <h3 style="margin:0 0 0.4rem;">${retailer.shop_name}</h3>
+                            <p class="muted" style="margin:0;">${retailer.full_name} • ${retailer.email} • ${retailer.phone}</p>
+                            <p class="muted" style="margin:0.35rem 0 0;">${retailer.county}, ${retailer.town} • ${retailer.business_type}</p>
+                        </div>
+                        <span class="pill ${retailer.review_status}">${retailer.review_status}</span>
+                    </div>
+                    <p style="margin-top:0.9rem;"><strong>National ID:</strong> ${retailer.national_id}</p>
+                    <p><strong>Address:</strong> ${retailer.shop_address}</p>
+                    ${retailer.shop_map_url ? `<p><strong>Map:</strong> <a href="${retailer.shop_map_url}" target="_blank" rel="noopener">Open location</a></p>` : ''}
+                    ${retailer.review_notes ? `<p><strong>Review notes:</strong> ${retailer.review_notes}</p>` : ''}
+                    ${renderDocuments(retailer.documents)}
+                    <textarea id="notes-${retailer.id}" placeholder="Add review notes (optional)">${retailer.review_notes || ''}</textarea>
+                    <div class="actions">
+                        <button class="approve" onclick="reviewRetailer(${retailer.id}, 'approved')">Approve</button>
+                        <button class="reject" onclick="reviewRetailer(${retailer.id}, 'rejected')">Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadRetailers() {
+            const key = getAdminKey();
+            if (!key) {
+                showMessage('Set your admin review key to load retailer submissions.');
+                document.getElementById('retailer-list').innerHTML = '';
+                return;
+            }
+
+            showMessage('Loading retailer submissions...');
+            try {
+                const status = document.getElementById('status-filter').value;
+                const res = await adminCall(`list.php?status=${encodeURIComponent(status)}`);
+                if (res.status !== 'ok') {
+                    showMessage(res.message || 'Failed to load submissions.', true);
+                    return;
+                }
+                showMessage(`Loaded ${res.data.retailers.length} retailer submission(s).`);
+                renderRetailers(res.data.retailers || []);
+            } catch {
+                showMessage('Failed to load submissions.', true);
+            }
+        }
+
+        async function reviewRetailer(retailerId, action) {
+            const notes = document.getElementById(`notes-${retailerId}`)?.value || '';
+            try {
+                const res = await adminCall('review.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ retailer_id: retailerId, action, notes }),
+                });
+                if (res.status !== 'ok') {
+                    alert(res.message || 'Failed to update retailer review.');
+                    return;
+                }
+                await loadRetailers();
+            } catch {
+                alert('Failed to update retailer review.');
+            }
+        }
+
+        document.getElementById('set-key-btn').addEventListener('click', setAdminKey);
+        document.getElementById('refresh-btn').addEventListener('click', loadRetailers);
+        document.getElementById('status-filter').addEventListener('change', loadRetailers);
+        loadRetailers();
+    </script>
+</body>
+</html>
