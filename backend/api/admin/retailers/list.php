@@ -62,7 +62,7 @@ try {
     $ids = array_map(static fn($row) => (int) $row['id'], $retailers);
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
     $docStmt = $db->prepare(
-        "SELECT retailer_id, document_type, file_path, mime_type, uploaded_at
+        "SELECT id, retailer_id, document_type, file_path, mime_type, uploaded_at
          FROM retailer_documents
          WHERE retailer_id IN ($placeholders)
          ORDER BY uploaded_at ASC"
@@ -77,6 +77,7 @@ try {
             $documentsByRetailer[$rid] = [];
         }
         $documentsByRetailer[$rid][] = [
+            'document_id' => (int) $doc['id'],
             'document_type' => $doc['document_type'],
             'file_path' => $doc['file_path'],
             'mime_type' => $doc['mime_type'],

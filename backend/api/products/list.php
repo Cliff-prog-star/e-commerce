@@ -1,7 +1,7 @@
 <?php
 /**
  * GET /backend/api/products/list.php
- * Query params: category (men|women|kids|all), search, sort (newest|price-low|price-high)
+ * Query params: category (men|women|kids|all), subcategory, search, sort (newest|price-low|price-high)
  *
  * Returns all matching products as a JSON array.
  */
@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $category = trim($_GET['category'] ?? 'all');
+$subcategory = trim($_GET['subcategory'] ?? 'all');
 $search   = trim($_GET['search']   ?? '');
 $sort     = trim($_GET['sort']     ?? 'newest');
 $page     = max(1, (int) ($_GET['page'] ?? 1));
@@ -35,8 +36,38 @@ if (!in_array($sort, ['newest', 'price-low', 'price-high'], true)) {
 // Whitelist category values
 $filterCategory = in_array($category, ['men', 'women', 'kids'], true) ? $category : null;
 
+$subcategoryMap = [
+    'men' => ['shirts', 'trousers', 't-shirts', 'jackets', 'suits', 'hoodies', 'accessories'],
+    'women' => ['dresses', 'tops', 'trousers', 'skirts', 'scarves', 'jackets', 'accessories'],
+    'kids' => ['shirts', 'trousers', 'dresses', 'shorts', 'sweaters', 'school-wear', 'accessories'],
+];
+
+function productsHasSubcategoryColumn(PDO $db): bool
+{
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    $stmt = $db->prepare(
+        'SELECT COUNT(*) AS cnt
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = :table_name
+           AND COLUMN_NAME = :column_name'
+    );
+    $stmt->execute([
+        'table_name' => 'products',
+        'column_name' => 'subcategory',
+    ]);
+
+    $cached = ((int) ($stmt->fetch()['cnt'] ?? 0)) > 0;
+    return $cached;
+}
+
 try {
     $db     = getDB();
+    $hasSubcategoryColumn = productsHasSubcategoryColumn($db);
     $params = [];
 
     $whereSql = ' WHERE 1=1';
@@ -44,6 +75,14 @@ try {
     if ($filterCategory !== null) {
         $whereSql .= ' AND p.category = :category';
         $params['category'] = $filterCategory;
+
+        if ($hasSubcategoryColumn && $subcategory !== '' && $subcategory !== 'all') {
+            $allowed = $subcategoryMap[$filterCategory] ?? [];
+            if (in_array($subcategory, $allowed, true)) {
+                $whereSql .= ' AND p.subcategory = :subcategory';
+                $params['subcategory'] = $subcategory;
+            }
+        }
     }
 
     if ($search !== '') {
@@ -66,11 +105,16 @@ try {
                 p.name,
                 p.price,
                 p.category,
+                ' . ($hasSubcategoryColumn ? 'p.subcategory' : 'NULL AS subcategory') . ',
+                COALESCE(r.is_approved, 0) AS retailer_verified,
+                r.county AS retailer_county,
+                r.town AS retailer_town,
                 p.image_url       AS image,
                 p.sizes,
                 p.description,
                 UNIX_TIMESTAMP(p.posted_at) * 1000 AS timestamp
-            FROM products p' . $whereSql;
+            FROM products p
+            LEFT JOIN retailers r ON r.id = p.retailer_id' . $whereSql;
 
     switch ($sort) {
         case 'price-low':
@@ -98,6 +142,7 @@ try {
     foreach ($rows as &$row) {
         $row['id']        = (int)   $row['id'];
         $row['retailer_id'] = (int) $row['retailer_id'];
+        $row['retailer_verified'] = (int) $row['retailer_verified'] === 1;
         $row['price']     = (float) $row['price'];
         $row['timestamp'] = (int)   $row['timestamp'];
     }

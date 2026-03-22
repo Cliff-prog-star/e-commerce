@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS products (
     name          VARCHAR(150)       NOT NULL,
     price         DECIMAL(10,2)      NOT NULL,
     category      ENUM('men','women','kids') NOT NULL,
+    subcategory   VARCHAR(60)        NOT NULL DEFAULT 'accessories',
     image_url     VARCHAR(500)       DEFAULT NULL,
     sizes         VARCHAR(100)       DEFAULT NULL,
     description   TEXT,
@@ -112,6 +113,23 @@ CREATE TABLE IF NOT EXISTS products (
         ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Ensure subcategory exists for already-created products tables.
+SET @products_subcategory_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'products'
+      AND COLUMN_NAME = 'subcategory'
+);
+SET @products_subcategory_sql := IF(
+    @products_subcategory_exists = 0,
+    'ALTER TABLE products ADD COLUMN subcategory VARCHAR(60) NOT NULL DEFAULT ''accessories'' AFTER category',
+    'SELECT 1'
+);
+PREPARE stmt_products_subcategory FROM @products_subcategory_sql;
+EXECUTE stmt_products_subcategory;
+DEALLOCATE PREPARE stmt_products_subcategory;
+
 -- ----------------------------------------------------------------
 -- Contact form messages
 -- ----------------------------------------------------------------
@@ -124,4 +142,54 @@ CREATE TABLE IF NOT EXISTS contact_messages (
     sent_at       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_sent_at (sent_at)
+) ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------
+-- Client <-> Retailer chat messages
+-- ----------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id             BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    retailer_id    INT UNSIGNED     NOT NULL,
+    client_name    VARCHAR(100)     NOT NULL,
+    client_email   VARCHAR(150)     NOT NULL,
+    sender_role    ENUM('client','retailer') NOT NULL,
+    sender_name    VARCHAR(100)     NOT NULL,
+    message        TEXT             NOT NULL,
+    sent_at        TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_retailer_time (retailer_id, sent_at),
+    KEY idx_client_time (client_email, sent_at),
+    KEY idx_thread (retailer_id, client_email, sent_at),
+    CONSTRAINT fk_chat_retailer
+        FOREIGN KEY (retailer_id) REFERENCES retailers (id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------
+-- Abuse/scam reports for products and chats
+-- ----------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS reports (
+    id                    BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    report_type           ENUM('product','chat') NOT NULL,
+    reporter_name         VARCHAR(100)     NOT NULL,
+    reporter_email        VARCHAR(150)     NOT NULL,
+    reason                VARCHAR(120)     NOT NULL,
+    notes                 TEXT             DEFAULT NULL,
+    product_id            INT UNSIGNED     DEFAULT NULL,
+    retailer_id           INT UNSIGNED     DEFAULT NULL,
+    chat_client_email     VARCHAR(150)     DEFAULT NULL,
+    status                ENUM('open','reviewed','dismissed') NOT NULL DEFAULT 'open',
+    created_at            TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_report_type_created (report_type, created_at),
+    KEY idx_report_status (status),
+    KEY idx_reporter_email (reporter_email),
+    KEY idx_product_id (product_id),
+    KEY idx_retailer_id (retailer_id),
+    CONSTRAINT fk_reports_product
+        FOREIGN KEY (product_id) REFERENCES products (id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_reports_retailer
+        FOREIGN KEY (retailer_id) REFERENCES retailers (id)
+        ON DELETE SET NULL
 ) ENGINE=InnoDB;

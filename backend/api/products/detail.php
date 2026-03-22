@@ -9,6 +9,29 @@ require_once __DIR__ . '/../../includes/cors.php';
 require_once __DIR__ . '/../../includes/response.php';
 require_once __DIR__ . '/../../config/database.php';
 
+function productsHasSubcategoryColumn(PDO $db): bool
+{
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    $stmt = $db->prepare(
+        'SELECT COUNT(*) AS cnt
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = :table_name
+           AND COLUMN_NAME = :column_name'
+    );
+    $stmt->execute([
+        'table_name' => 'products',
+        'column_name' => 'subcategory',
+    ]);
+
+    $cached = ((int) ($stmt->fetch()['cnt'] ?? 0)) > 0;
+    return $cached;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonError('Method not allowed.', 405);
 }
@@ -20,6 +43,7 @@ if ($id === false) {
 
 try {
     $db   = getDB();
+    $hasSubcategoryColumn = productsHasSubcategoryColumn($db);
     $stmt = $db->prepare(
         'SELECT
              p.id,
@@ -28,6 +52,7 @@ try {
              p.name,
              p.price,
              p.category,
+             ' . ($hasSubcategoryColumn ? 'p.subcategory' : 'NULL AS subcategory') . ',
              p.image_url        AS image,
              p.sizes,
              p.description,

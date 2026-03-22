@@ -88,12 +88,13 @@
             }
             return `<div class="doc-grid">${documents.map(doc => {
                 const isImage = doc.mime_type.startsWith('image/');
+                const docUrl = `backend/api/admin/retailers/document.php?doc_id=${encodeURIComponent(doc.document_id)}&admin_key=${encodeURIComponent(getAdminKey())}`;
                 return `
                     <div class="doc-card">
-                        ${isImage ? `<img src="${doc.file_path}" alt="${doc.document_type}">` : ''}
+                        ${isImage ? `<img src="${docUrl}" alt="${doc.document_type}">` : ''}
                         <strong>${doc.document_type.replace(/_/g, ' ')}</strong>
                         <p class="muted">${doc.mime_type}</p>
-                        <a href="${doc.file_path}" target="_blank" rel="noopener">Open file</a>
+                        <a href="${docUrl}" target="_blank" rel="noopener">Open file</a>
                     </div>
                 `;
             }).join('')}</div>`;

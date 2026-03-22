@@ -83,3 +83,43 @@ Open:
 5. Verify product posting is disabled before approval and enabled after approval.
 6. Verify product appears on home and product detail pages.
 7. Submit contact form and confirm row in `contact_messages`.
+
+## 9. Client-Retailer Chat
+- A new chat table `chat_messages` is included in `database/schema.sql`.
+- If your database already exists, run the schema file again so MySQL creates the new table:
+
+```bash
+mysql -u <user> -p < database/schema.sql
+```
+
+- Chat is available on `index.html` under **Client-Retailer Chat**.
+- Client mode:
+	- Log in as a client.
+	- Select a retailer and send messages.
+- Retailer mode:
+	- Log in as a client account that is also an approved retailer session.
+	- Open chat and select a client thread.
+	- Reply directly from the chat box.
+
+## 10. Category Subcategories
+- Product filters now support category -> subcategory flow.
+- Product posting now requires a subcategory that matches the selected category.
+- The schema includes an automatic migration for existing databases to add `products.subcategory`.
+- Re-run the schema to apply the update:
+
+```bash
+mysql -u <user> -p < database/schema.sql
+```
+
+## 11. Security, Reporting, and Trust Indicators
+- Retailer identity/business documents are now stored in protected storage under `backend/storage/retailers/`.
+- Direct web access to retailer upload folders is denied via `.htaccess`.
+- Admin now views retailer documents through a secured endpoint:
+	- `backend/api/admin/retailers/document.php?doc_id=...&admin_key=...`
+- Product cards now display trust indicators:
+	- Verified seller badge
+	- Seller location (county/town)
+	- Rating indicator (placeholder visual score)
+- New report API for abuse/scam reporting:
+	- `POST backend/api/reports/submit.php`
+	- Supports `product` and `chat` reports

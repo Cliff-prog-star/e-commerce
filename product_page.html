@@ -464,7 +464,7 @@
                                         <span class="product-price">$${p.price.toFixed(2)}</span>
                                     </div>
                                     <span class="retailer-name">by ${escHtml(p.retailer)}</span>
-                                    <span class="product-category">${escHtml(p.category)}</span>
+                                    <span class="product-category">${escHtml(p.category)}${p.subcategory ? ` • ${escHtml(p.subcategory)}` : ''}</span>
                                     <p class="product-description">${escHtml(p.description)}</p>
                                     <p class="product-sizes"><strong>Sizes:</strong> ${escHtml(p.sizes)}</p>
                                     <a href="product_page.html?id=${p.id}" class="btn-add-cart" style="display:block; text-align:center; text-decoration:none; padding:0.8rem; border-radius:8px;">View Details</a>
@@ -519,7 +519,7 @@
                         <h1 class="product-detail-name">${escHtml(product.name)}</h1>
                         <p class="product-detail-price">$${product.price.toFixed(2)}</p>
                         <p class="product-detail-retailer">Sold by <strong>${escHtml(product.retailer)}</strong></p>
-                        <span class="product-detail-category-tag">${escHtml(product.category)}</span>
+                        <span class="product-detail-category-tag">${escHtml(product.category)}${product.subcategory ? ` • ${escHtml(product.subcategory)}` : ''}</span>
                         <hr class="divider" />
                         <p class="product-detail-description">${escHtml(product.description)}</p>
                         <hr class="divider" />

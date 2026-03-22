@@ -15,9 +15,9 @@ require_once __DIR__ . '/../../includes/response.php';
 require_once __DIR__ . '/../../config/database.php';
 
 /**
- * Save a base64-encoded verification document to disk.
+ * Save a base64-encoded verification document to protected backend storage.
  * Supports images and PDFs only.
- * Returns [path, mime].
+ * Returns [stored_path, full_path, mime].
  */
 function saveRetailerDocument(int $retailerId, string $documentType, string $dataUrl): array
 {
@@ -52,9 +52,9 @@ function saveRetailerDocument(int $retailerId, string $documentType, string $dat
         jsonError("Unsupported document type for {$documentType}.");
     }
 
-    $uploadDir = __DIR__ . '/../../../uploads/retailers';
+    $uploadDir = __DIR__ . '/../../../storage/retailers';
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-        jsonError('Unable to prepare retailer upload directory.', 500);
+        jsonError('Unable to prepare secure retailer storage directory.', 500);
     }
 
     try {
@@ -69,7 +69,8 @@ function saveRetailerDocument(int $retailerId, string $documentType, string $dat
     }
 
     return [
-        'path' => 'backend/uploads/retailers/' . $filename,
+        'stored_path' => $filename,
+        'full_path' => $fullPath,
         'mime' => $mime,
     ];
 }
@@ -194,12 +195,12 @@ try {
         }
 
         $saved = saveRetailerDocument($retailerId, $documentType, $payload);
-        $savedFiles[] = $saved['path'];
+        $savedFiles[] = $saved['full_path'];
 
         $insertDocument->execute([
             'retailer_id' => $retailerId,
             'document_type' => $documentType,
-            'file_path' => $saved['path'],
+            'file_path' => $saved['stored_path'],
             'mime_type' => $saved['mime'],
         ]);
     }
@@ -228,10 +229,8 @@ try {
     }
     if (!empty($savedFiles)) {
         foreach ($savedFiles as $savedFile) {
-            $relative = substr($savedFile, strlen('backend/'));
-            $fullPath = __DIR__ . '/../../../' . $relative;
-            if (is_file($fullPath)) {
-                @unlink($fullPath);
+            if (is_file($savedFile)) {
+                @unlink($savedFile);
             }
         }
     }

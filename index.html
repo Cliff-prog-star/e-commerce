@@ -121,6 +121,9 @@
                     <option value="women">Women</option>
                     <option value="kids">Kids</option>
                 </select>
+                <select id="subcategory-filter" disabled>
+                    <option value="all">All Subcategories</option>
+                </select>
                 <select id="sort-filter">
                     <option value="newest">Newest First</option>
                     <option value="price-low">Price: Low to High</option>
@@ -195,11 +198,10 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="product-image">Product Image *</label>
-                            <input type="file" id="product-image" accept="image/*" required
-                                   style="padding:0.4rem 0;">
-                            <img id="product-image-preview" src="" alt="Preview"
-                                 style="display:none; margin-top:0.5rem; max-height:120px; border-radius:8px; object-fit:cover;">
+                            <label for="product-subcategory">Subcategory *</label>
+                            <select id="product-subcategory" required disabled>
+                                <option value="">Select Category First</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="product-sizes">Available Sizes *</label>
@@ -207,9 +209,18 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="product-description">Description *</label>
-                        <textarea id="product-description" rows="3" required></textarea>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="product-image">Product Image *</label>
+                            <input type="file" id="product-image" accept="image/*" required
+                                   style="padding:0.4rem 0;">
+                            <img id="product-image-preview" src="" alt="Preview"
+                                 style="display:none; margin-top:0.5rem; max-height:120px; border-radius:8px; object-fit:cover;">
+                        </div>
+                        <div class="form-group">
+                            <label for="product-description">Description *</label>
+                            <textarea id="product-description" rows="5" required></textarea>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-primary">Add Product</button>
@@ -218,6 +229,63 @@
             </div>
         </div>
     </section>
+
+    <section class="chat-section" id="chat-hub">
+        <div class="container">
+            <div class="chat-card">
+                <div class="chat-header-row">
+                    <h2>Client-Retailer Chat</h2>
+                    <p id="chat-mode-label">Log in as a client or approved retailer to chat.</p>
+                    <button type="button" id="report-chat-btn" class="report-btn" style="display:none;">Report Chat</button>
+                </div>
+
+                <div class="chat-controls" id="chat-controls" style="display:none;">
+                    <div class="chat-client-controls" id="chat-client-controls" style="display:none;">
+                        <label for="chat-retailer-search">Search Shop Name</label>
+                        <input type="text" id="chat-retailer-search" class="chat-search-input" placeholder="Type shop name...">
+                        <label for="chat-retailer-select">Choose Retailer</label>
+                        <select id="chat-retailer-select">
+                            <option value="">Select a retailer</option>
+                        </select>
+                    </div>
+
+                    <div class="chat-retailer-controls" id="chat-retailer-controls" style="display:none;">
+                        <label for="chat-client-select">Choose Client</label>
+                        <select id="chat-client-select">
+                            <option value="">Select a client</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="chat-empty-state" class="chat-empty-state">
+                    Start a conversation by selecting a chat participant.
+                </div>
+
+                <div id="chat-thread" class="chat-thread" style="display:none;">
+                    <div id="chat-messages" class="chat-messages"></div>
+                    <form id="chat-form" class="chat-form">
+                        <textarea id="chat-input" maxlength="1500" placeholder="Type your message..." required></textarea>
+                        <button type="submit" id="chat-send-btn" class="btn-primary">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <nav id="client-bottom-nav" class="client-bottom-nav" style="display:none;" aria-label="Client quick navigation">
+        <button type="button" id="bottom-nav-home" class="client-bottom-nav-btn active">
+            <span class="client-bottom-nav-icon">⌂</span>
+            <span>Home</span>
+        </button>
+        <button type="button" id="bottom-nav-chat" class="client-bottom-nav-btn">
+            <span class="client-bottom-nav-icon">💬</span>
+            <span>Chat</span>
+        </button>
+        <button type="button" id="bottom-nav-profile" class="client-bottom-nav-btn">
+            <span class="client-bottom-nav-icon">👤</span>
+            <span>Profile</span>
+        </button>
+    </nav>
 
     <!-- Shopping Cart Modal -->
     <div id="cart-modal" class="modal">

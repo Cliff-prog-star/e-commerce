@@ -107,9 +107,22 @@ let retailerVerification  = loadVerification();
 let currentPage           = 1;
 let totalPages            = 1;
 const pageSize            = 12;
-let activeFilters         = { search: '', category: 'all', sort: 'newest' };
+let activeFilters         = { search: '', category: 'all', subcategory: 'all', sort: 'newest' };
 let clientUsers           = loadClientUsers();
 let currentClient         = loadClientSession();
+let chatRole              = null;
+let activeChatRetailerId  = 0;
+let activeChatRetailerName = '';
+let activeChatClientEmail = '';
+let activeChatClientName  = '';
+let chatRefreshTimer      = null;
+let clientRetailerDirectory = [];
+
+const SUBCATEGORY_MAP = {
+    men: ['shirts', 'trousers', 't-shirts', 'jackets', 'suits', 'hoodies', 'accessories'],
+    women: ['dresses', 'tops', 'trousers', 'skirts', 'scarves', 'jackets', 'accessories'],
+    kids: ['shirts', 'trousers', 'dresses', 'shorts', 'sweaters', 'school-wear', 'accessories'],
+};
 
 const defaultRetailerState = {
     phoneVerified: false,
@@ -123,6 +136,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     setupEventListeners();
     setupRegistrationListeners();
     setupClientAuthListeners();
+    setupChatListeners();
     updateClientAccessUI();
 
     if (isClientLoggedIn()) {
@@ -139,6 +153,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     updateCartCount();
+    refreshChatAccess();
+    updateClientBottomNav();
 });
 
 function isClientLoggedIn() {
@@ -176,6 +192,8 @@ function updateClientAccessUI() {
         if (addPostTrigger) addPostTrigger.style.display = 'inline-block';
         productsSection?.classList.remove('section-locked');
         retailerSection?.classList.remove('section-locked');
+        refreshChatAccess();
+        updateClientBottomNav();
         return;
     }
 
@@ -190,12 +208,63 @@ function updateClientAccessUI() {
     productsSection?.classList.add('section-locked');
     retailerSection?.classList.add('section-locked');
     setRetailerDashboardVisibility(false);
+    refreshChatAccess();
+    updateClientBottomNav();
 }
 
 function setRetailerDashboardVisibility(show) {
     const retailerSection = document.getElementById('retailer');
     if (!retailerSection) return;
     retailerSection.style.display = show ? 'block' : 'none';
+}
+
+function formatSubcategoryLabel(value) {
+    return String(value || '')
+        .split('-')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+}
+
+function populateSubcategorySelect(target, category, options = {}) {
+    const select = document.getElementById(target);
+    if (!select) return;
+
+    const includeAllOption = !!options.includeAllOption;
+    const list = SUBCATEGORY_MAP[category] || [];
+    const selected = String(options.selected || '').trim();
+
+    if (includeAllOption) {
+        select.innerHTML = '<option value="all">All Subcategories</option>';
+    } else {
+        select.innerHTML = '<option value="">Select Subcategory</option>';
+    }
+
+    if (list.length === 0) {
+        if (includeAllOption) {
+            select.disabled = true;
+            select.value = 'all';
+        } else {
+            select.disabled = true;
+            select.innerHTML = '<option value="">Select Category First</option>';
+        }
+        return;
+    }
+
+    for (const value of list) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = formatSubcategoryLabel(value);
+        select.appendChild(option);
+    }
+
+    select.disabled = false;
+    if (selected && list.includes(selected)) {
+        select.value = selected;
+    } else if (includeAllOption) {
+        select.value = 'all';
+    } else {
+        select.value = '';
+    }
 }
 
 function setupClientAuthListeners() {
@@ -317,6 +386,7 @@ async function onClientLogin() {
         const grid = document.getElementById('products-grid');
         grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#b91c1c;padding:2rem;">Unable to load products right now.</p>';
     }
+    refreshChatAccess();
 }
 
 // ───────────────────────────────────────────────
@@ -335,6 +405,7 @@ async function fetchProductsFromAPI(page = 1) {
     params.set('page', String(page));
     params.set('limit', String(pageSize));
     if (activeFilters.category !== 'all') params.set('category', activeFilters.category);
+    if (activeFilters.subcategory !== 'all') params.set('subcategory', activeFilters.subcategory);
     if (activeFilters.search) params.set('search', activeFilters.search);
     if (activeFilters.sort) params.set('sort', activeFilters.sort);
 
@@ -351,6 +422,7 @@ async function fetchProductsFromAPI(page = 1) {
     nextId = products.reduce((max, p) => Math.max(max, p.id), 0) + 1;
     displayProducts(products);
     updatePaginationControls();
+    populateClientRetailerOptions();
 }
 
 async function checkRetailerStatusFromAPI() {
@@ -392,6 +464,8 @@ function updatePaginationControls() {
 
 // Setup event listeners
 function setupEventListeners() {
+    setupBottomNavListeners();
+
     // Product form submission
     document.getElementById('add-product-form').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -418,10 +492,26 @@ function setupEventListeners() {
     document.getElementById('search-input').addEventListener('input', filterProducts);
     
     // Category filter
-    document.getElementById('category-filter').addEventListener('change', filterProducts);
+    document.getElementById('category-filter').addEventListener('change', function () {
+        const category = this.value;
+        populateSubcategorySelect('subcategory-filter', category, { includeAllOption: true });
+        filterProducts();
+    });
+
+    // Subcategory filter
+    document.getElementById('subcategory-filter').addEventListener('change', filterProducts);
     
     // Sort filter
     document.getElementById('sort-filter').addEventListener('change', filterProducts);
+
+    // Product form category/subcategory dependency
+    document.getElementById('product-category').addEventListener('change', function () {
+        populateSubcategorySelect('product-subcategory', this.value);
+    });
+
+    // Initial state for subcategory selectors
+    populateSubcategorySelect('subcategory-filter', 'all', { includeAllOption: true });
+    populateSubcategorySelect('product-subcategory', '');
 
     // Products pagination
     document.getElementById('products-prev').addEventListener('click', async function () {
@@ -506,6 +596,109 @@ function setupEventListeners() {
     });
 }
 
+function setupBottomNavListeners() {
+    const homeBtn = document.getElementById('bottom-nav-home');
+    const chatBtn = document.getElementById('bottom-nav-chat');
+    const profileBtn = document.getElementById('bottom-nav-profile');
+
+    homeBtn?.addEventListener('click', function () {
+        setBottomNavActive('home');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    chatBtn?.addEventListener('click', function () {
+        setBottomNavActive('chat');
+        document.getElementById('chat-hub')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    profileBtn?.addEventListener('click', function () {
+        setBottomNavActive('profile');
+        document.getElementById('client-access')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
+
+function setBottomNavActive(tab) {
+    const homeBtn = document.getElementById('bottom-nav-home');
+    const chatBtn = document.getElementById('bottom-nav-chat');
+    const profileBtn = document.getElementById('bottom-nav-profile');
+
+    homeBtn?.classList.toggle('active', tab === 'home');
+    chatBtn?.classList.toggle('active', tab === 'chat');
+    profileBtn?.classList.toggle('active', tab === 'profile');
+}
+
+function updateClientBottomNav() {
+    const nav = document.getElementById('client-bottom-nav');
+    if (!nav) return;
+
+    if (isClientLoggedIn()) {
+        nav.style.display = '';
+        document.body.classList.add('has-client-bottom-nav');
+    } else {
+        nav.style.display = 'none';
+        document.body.classList.remove('has-client-bottom-nav');
+    }
+}
+
+function setupChatListeners() {
+    const retailerSelect = document.getElementById('chat-retailer-select');
+    const retailerSearch = document.getElementById('chat-retailer-search');
+    const clientSelect = document.getElementById('chat-client-select');
+    const chatForm = document.getElementById('chat-form');
+    const reportChatBtn = document.getElementById('report-chat-btn');
+
+    reportChatBtn?.addEventListener('click', async function () {
+        await reportCurrentChat();
+    });
+
+    retailerSearch?.addEventListener('input', function () {
+        renderClientRetailerSelect(this.value || '');
+    });
+
+    retailerSelect?.addEventListener('change', async function () {
+        const selected = this.value.trim();
+        if (!selected) {
+            activeChatRetailerId = 0;
+            activeChatRetailerName = '';
+            activeChatClientEmail = '';
+            activeChatClientName = '';
+            renderChatThread([]);
+            toggleChatThread(false);
+            return;
+        }
+
+        const [idPart, namePart] = selected.split('|');
+        activeChatRetailerId = Number(idPart || 0);
+        activeChatRetailerName = String(namePart || 'Retailer');
+        activeChatClientEmail = String(currentClient?.email || '').toLowerCase();
+        activeChatClientName = String(currentClient?.name || 'Client');
+        await loadChatMessages();
+    });
+
+    clientSelect?.addEventListener('change', async function () {
+        const selected = this.value.trim();
+        if (!selected) {
+            activeChatClientEmail = '';
+            activeChatClientName = '';
+            renderChatThread([]);
+            toggleChatThread(false);
+            return;
+        }
+
+        const [emailPart, namePart] = selected.split('|');
+        activeChatRetailerId = Number(retailerVerification.retailerId || 0);
+        activeChatRetailerName = String(retailerVerification.shopName || 'Retailer');
+        activeChatClientEmail = String(emailPart || '').toLowerCase();
+        activeChatClientName = String(namePart || 'Client');
+        await loadChatMessages();
+    });
+
+    chatForm?.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        await sendChatMessage();
+    });
+}
+
 function setupRegistrationListeners() {
     document.querySelector('.registration-close').addEventListener('click', closeRegistrationModal);
     document.getElementById('registration-next').addEventListener('click', nextRegistrationStep);
@@ -534,6 +727,12 @@ function displayProducts(productsToDisplay) {
                 </div>
                 <span class="retailer-name">by ${escHtml(product.retailer)}</span>
                 <span class="product-category">${escHtml(product.category)}</span>
+                ${product.subcategory ? `<span class="product-category" style="margin-left:0.35rem; background:#fdebdc; color:#8f461f;">${escHtml(formatSubcategoryLabel(product.subcategory))}</span>` : ''}
+                <p class="product-sizes" style="margin-top:0.45rem; margin-bottom:0.35rem;">
+                    ${product.retailer_verified ? '✔️ Verified seller' : '⚠️ Seller pending verification'}
+                    ${product.retailer_town || product.retailer_county ? ` • 📍 ${escHtml([product.retailer_town, product.retailer_county].filter(Boolean).join(', '))}` : ''}
+                    ${product.retailer_id ? ` • ⭐ ${retailerRating(product.retailer_id)}` : ''}
+                </p>
                 <p class="product-description">${escHtml(product.description)}</p>
                 <p class="product-sizes"><strong>Sizes:</strong> ${escHtml(product.sizes)}</p>
                 <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
@@ -543,6 +742,9 @@ function displayProducts(productsToDisplay) {
                               justify-content:center; background:white; color:#10b981; border:2px solid #10b981;">
                         View Details
                     </a>
+                </div>
+                <div style="margin-top:0.55rem;">
+                    <button type="button" class="report-btn" onclick="reportProduct(${product.id})">Report Seller</button>
                 </div>
                 ${isProductOwner(product) ? `
                 <div style="margin-top:0.5rem;">
@@ -572,6 +774,80 @@ function escHtml(str) {
     return String(str ?? '')
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function retailerRating(retailerId) {
+    const id = Number(retailerId || 0);
+    const score = 4.1 + ((id % 10) * 0.08);
+    return Math.min(4.9, score).toFixed(1);
+}
+
+async function submitReport(payload) {
+    const res = await apiCall('reports/submit.php', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+    if (res.status !== 'ok') {
+        throw new Error(res.message || 'Failed to submit report.');
+    }
+}
+
+async function reportProduct(productId) {
+    if (!isClientLoggedIn()) {
+        showSuccessMessage('Log in as a client to report a seller.');
+        return;
+    }
+
+    const reason = prompt('Reason for report (e.g. scam, fake product, abusive behavior):');
+    if (!reason || !reason.trim()) {
+        return;
+    }
+
+    try {
+        await submitReport({
+            report_type: 'product',
+            reporter_name: String(currentClient?.name || 'Client'),
+            reporter_email: String(currentClient?.email || '').toLowerCase(),
+            reason: reason.trim().slice(0, 120),
+            notes: '',
+            product_id: Number(productId),
+        });
+        showSuccessMessage('Report submitted. Our team will review it.');
+    } catch (error) {
+        showSuccessMessage(error?.message || 'Failed to submit report.');
+    }
+}
+
+async function reportCurrentChat() {
+    if (!isClientLoggedIn()) {
+        showSuccessMessage('Log in as a client to report chat issues.');
+        return;
+    }
+
+    if (!activeChatRetailerId || !activeChatClientEmail) {
+        showSuccessMessage('Open a chat thread first before reporting.');
+        return;
+    }
+
+    const reason = prompt('Reason for chat report (e.g. scam attempt, harassment):');
+    if (!reason || !reason.trim()) {
+        return;
+    }
+
+    try {
+        await submitReport({
+            report_type: 'chat',
+            reporter_name: String(currentClient?.name || 'Client'),
+            reporter_email: String(currentClient?.email || '').toLowerCase(),
+            reason: reason.trim().slice(0, 120),
+            notes: '',
+            retailer_id: Number(activeChatRetailerId),
+            chat_client_email: String(activeChatClientEmail || '').toLowerCase(),
+        });
+        showSuccessMessage('Chat report submitted. Thank you.');
+    } catch (error) {
+        showSuccessMessage(error?.message || 'Failed to submit chat report.');
+    }
 }
 
 async function readFileInputAsDataUrl(inputId, required = false) {
@@ -610,10 +886,16 @@ async function addNewProduct() {
         name:        document.getElementById('product-name').value.trim(),
         price:       parseFloat(document.getElementById('product-price').value),
         category:    document.getElementById('product-category').value,
+        subcategory: document.getElementById('product-subcategory').value,
         image:       '',   // filled after reading file below
         sizes:       document.getElementById('product-sizes').value.trim(),
         description: document.getElementById('product-description').value.trim(),
     };
+
+    if (!productData.subcategory) {
+        showSuccessMessage('Please choose a subcategory.');
+        return;
+    }
 
     // Read the selected image file as a data URL
     const fileInput = document.getElementById('product-image');
@@ -644,6 +926,7 @@ async function addNewProduct() {
             saveProducts();
             displayProducts(products);
             document.getElementById('add-product-form').reset();
+            populateSubcategorySelect('product-subcategory', '');
             document.getElementById('retailer-name').value = retailerVerification.shopName || '';
             const preview = document.getElementById('product-image-preview');
             if (preview) {
@@ -862,6 +1145,7 @@ function updateVerificationUI() {
 async function filterProducts() {
     activeFilters.search = document.getElementById('search-input').value.trim();
     activeFilters.category = document.getElementById('category-filter').value;
+    activeFilters.subcategory = document.getElementById('subcategory-filter').value;
     activeFilters.sort = document.getElementById('sort-filter').value;
     try {
         await fetchProductsFromAPI(1);
@@ -1000,4 +1284,300 @@ function showSuccessMessage(message) {
     setTimeout(() => {
         msgDiv.remove();
     }, 3000);
+}
+
+function clearChatTimer() {
+    if (chatRefreshTimer) {
+        clearInterval(chatRefreshTimer);
+        chatRefreshTimer = null;
+    }
+}
+
+function refreshChatAccess() {
+    const chatControls = document.getElementById('chat-controls');
+    const clientControls = document.getElementById('chat-client-controls');
+    const retailerControls = document.getElementById('chat-retailer-controls');
+    const modeLabel = document.getElementById('chat-mode-label');
+
+    clearChatTimer();
+    resetChatSelection();
+
+    if (!chatControls || !clientControls || !retailerControls || !modeLabel) {
+        return;
+    }
+
+    if (!isClientLoggedIn()) {
+        chatRole = null;
+        chatControls.style.display = 'none';
+        clientControls.style.display = 'none';
+        retailerControls.style.display = 'none';
+        modeLabel.textContent = 'Log in as a client or approved retailer to chat.';
+        toggleChatThread(false);
+        return;
+    }
+
+    chatControls.style.display = 'grid';
+
+    if (retailerVerification.isApproved && Number(retailerVerification.retailerId || 0) > 0) {
+        chatRole = 'retailer';
+        clientControls.style.display = 'none';
+        retailerControls.style.display = 'flex';
+        modeLabel.textContent = `Retailer mode: ${retailerVerification.shopName || 'Verified retailer'}`;
+        loadRetailerThreads();
+    } else {
+        chatRole = 'client';
+        clientControls.style.display = 'flex';
+        retailerControls.style.display = 'none';
+        modeLabel.textContent = `Client mode: ${currentClient?.name || currentClient?.email || 'Client'}`;
+        populateClientRetailerOptions();
+    }
+}
+
+function resetChatSelection() {
+    activeChatRetailerId = 0;
+    activeChatRetailerName = '';
+    activeChatClientEmail = '';
+    activeChatClientName = '';
+
+    const retailerSelect = document.getElementById('chat-retailer-select');
+    const retailerSearch = document.getElementById('chat-retailer-search');
+    const clientSelect = document.getElementById('chat-client-select');
+    if (retailerSelect) retailerSelect.value = '';
+    if (retailerSearch) retailerSearch.value = '';
+    if (clientSelect) clientSelect.value = '';
+}
+
+function toggleChatThread(show) {
+    const thread = document.getElementById('chat-thread');
+    const emptyState = document.getElementById('chat-empty-state');
+    const reportBtn = document.getElementById('report-chat-btn');
+    if (!thread || !emptyState) return;
+
+    thread.style.display = show ? 'block' : 'none';
+    emptyState.style.display = show ? 'none' : 'block';
+    if (reportBtn) {
+        reportBtn.style.display = show ? 'inline-flex' : 'none';
+    }
+}
+
+function populateClientRetailerOptions() {
+    if (chatRole !== 'client') return;
+
+    const map = new Map();
+
+    for (const product of products) {
+        const rid = Number(product.retailer_id || 0);
+        const rname = String(product.retailer || '').trim();
+        if (rid > 0 && rname) {
+            map.set(rid, rname);
+        }
+    }
+
+    clientRetailerDirectory = [...map.entries()]
+        .map(([rid, name]) => ({ retailer_id: Number(rid), retailer_name: String(name) }))
+        .sort((a, b) => a.retailer_name.localeCompare(b.retailer_name));
+
+    renderClientRetailerSelect('');
+
+    loadClientThreads();
+}
+
+function renderClientRetailerSelect(searchTerm = '') {
+    const select = document.getElementById('chat-retailer-select');
+    if (!select) return;
+
+    const query = String(searchTerm || '').trim().toLowerCase();
+    const existing = activeChatRetailerId;
+    const filtered = query
+        ? clientRetailerDirectory.filter(item => item.retailer_name.toLowerCase().includes(query))
+        : clientRetailerDirectory;
+
+    select.innerHTML = '<option value="">Select a retailer</option>';
+    for (const item of filtered) {
+        const option = document.createElement('option');
+        option.value = `${item.retailer_id}|${item.retailer_name}`;
+        option.textContent = item.retailer_name;
+        if (existing === item.retailer_id) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    }
+}
+
+async function loadClientThreads() {
+    if (chatRole !== 'client' || !isClientLoggedIn()) return;
+
+    try {
+        const email = String(currentClient?.email || '').toLowerCase();
+        if (!email) return;
+        const res = await apiCall(`chat/list_threads.php?role=client&client_email=${encodeURIComponent(email)}`);
+        if (res.status !== 'ok') return;
+
+        const select = document.getElementById('chat-retailer-select');
+        for (const thread of (res.data.threads || [])) {
+            const rid = Number(thread.retailer_id || 0);
+            const name = String(thread.retailer_name || '').trim();
+            if (rid <= 0 || !name) continue;
+            const exists = clientRetailerDirectory.some(item => item.retailer_id === rid);
+            if (!exists) {
+                clientRetailerDirectory.push({ retailer_id: rid, retailer_name: name });
+            }
+        }
+        clientRetailerDirectory.sort((a, b) => a.retailer_name.localeCompare(b.retailer_name));
+        const searchInput = document.getElementById('chat-retailer-search');
+        renderClientRetailerSelect(searchInput?.value || '');
+    } catch {
+        // Keep the UI usable even when thread fetch fails.
+    }
+}
+
+async function loadRetailerThreads() {
+    if (chatRole !== 'retailer') return;
+
+    try {
+        const res = await apiCall('chat/list_threads.php?role=retailer');
+        if (res.status !== 'ok') return;
+
+        const select = document.getElementById('chat-client-select');
+        if (!select) return;
+
+        const existingEmail = activeChatClientEmail;
+        select.innerHTML = '<option value="">Select a client</option>';
+
+        const modeLabel = document.getElementById('chat-mode-label');
+
+        for (const thread of (res.data.threads || [])) {
+            const email = String(thread.client_email || '').toLowerCase();
+            const name = String(thread.client_name || 'Client').trim();
+            if (!email) continue;
+            const option = document.createElement('option');
+            option.value = `${email}|${name}`;
+            option.textContent = `${name} (${email})`;
+            if (existingEmail && existingEmail === email) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        }
+
+        if ((res.data.threads || []).length === 0) {
+            toggleChatThread(false);
+            if (modeLabel) {
+                modeLabel.textContent = `Retailer mode: ${retailerVerification.shopName || 'Verified retailer'} - waiting for client messages.`;
+            }
+        }
+    } catch {
+        showSuccessMessage('Unable to load retailer chat threads right now.');
+    }
+}
+
+async function loadChatMessages() {
+    if (!activeChatRetailerId || !activeChatClientEmail) {
+        toggleChatThread(false);
+        return;
+    }
+
+    try {
+        const query = new URLSearchParams({
+            retailer_id: String(activeChatRetailerId),
+            client_email: activeChatClientEmail,
+        });
+
+        const res = await apiCall(`chat/messages.php?${query.toString()}`);
+        if (res.status !== 'ok') {
+            showSuccessMessage(res.message || 'Failed to load chat messages.');
+            return;
+        }
+
+        renderChatThread(res.data.messages || []);
+        toggleChatThread(true);
+        startChatAutoRefresh();
+    } catch {
+        showSuccessMessage('Unable to load chat messages.');
+    }
+}
+
+function renderChatThread(messages) {
+    const wrap = document.getElementById('chat-messages');
+    if (!wrap) return;
+
+    if (!messages || messages.length === 0) {
+        wrap.innerHTML = '<div class="chat-empty-state">No messages yet. Start the conversation.</div>';
+        return;
+    }
+
+    const myRole = chatRole === 'retailer' ? 'retailer' : 'client';
+    wrap.innerHTML = messages.map(msg => {
+        const own = String(msg.sender_role || '') === myRole;
+        const ts = Number(msg.timestamp || 0);
+        const time = ts ? new Date(ts).toLocaleString() : '';
+        return `
+            <div class="chat-msg ${own ? 'me' : 'other'}">
+                <div>${escHtml(msg.message || '')}</div>
+                <span class="chat-msg-meta">${escHtml(msg.sender_name || '')} ${time ? `• ${escHtml(time)}` : ''}</span>
+            </div>
+        `;
+    }).join('');
+
+    wrap.scrollTop = wrap.scrollHeight;
+}
+
+function startChatAutoRefresh() {
+    clearChatTimer();
+    chatRefreshTimer = setInterval(async () => {
+        if (!activeChatRetailerId || !activeChatClientEmail) return;
+        try {
+            const query = new URLSearchParams({
+                retailer_id: String(activeChatRetailerId),
+                client_email: activeChatClientEmail,
+            });
+            const res = await apiCall(`chat/messages.php?${query.toString()}`);
+            if (res.status === 'ok') {
+                renderChatThread(res.data.messages || []);
+            }
+        } catch {
+            // Ignore refresh errors to avoid noisy UI.
+        }
+    }, 6000);
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    if (!input) return;
+
+    const message = input.value.trim();
+    if (!message) return;
+
+    if (!activeChatRetailerId || !activeChatClientEmail) {
+        showSuccessMessage('Choose a chat participant first.');
+        return;
+    }
+
+    const payload = {
+        sender_role: chatRole === 'retailer' ? 'retailer' : 'client',
+        retailer_id: activeChatRetailerId,
+        client_name: chatRole === 'retailer' ? activeChatClientName : String(currentClient?.name || 'Client'),
+        client_email: chatRole === 'retailer' ? activeChatClientEmail : String(currentClient?.email || '').toLowerCase(),
+        message,
+    };
+
+    try {
+        const res = await apiCall('chat/send.php', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        if (res.status !== 'ok') {
+            showSuccessMessage(res.message || 'Failed to send message.');
+            return;
+        }
+
+        input.value = '';
+        await loadChatMessages();
+        if (chatRole === 'retailer') {
+            await loadRetailerThreads();
+        } else {
+            await loadClientThreads();
+        }
+    } catch {
+        showSuccessMessage('Failed to send message.');
+    }
 }

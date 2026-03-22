@@ -1,7 +1,7 @@
 <?php
 /**
  * POST /backend/api/products/add.php
- * Body: { name, price, category, image, sizes, description }
+ * Body: { name, price, category, subcategory, image, sizes, description }
  *
  * Requires an active, approved retailer session.
  * Validates all fields, verifies the retailer record in DB,
@@ -11,6 +11,29 @@
 require_once __DIR__ . '/../../includes/cors.php';
 require_once __DIR__ . '/../../includes/response.php';
 require_once __DIR__ . '/../../config/database.php';
+
+function productsHasSubcategoryColumn(PDO $db): bool
+{
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    $stmt = $db->prepare(
+        'SELECT COUNT(*) AS cnt
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = :table_name
+           AND COLUMN_NAME = :column_name'
+    );
+    $stmt->execute([
+        'table_name' => 'products',
+        'column_name' => 'subcategory',
+    ]);
+
+    $cached = ((int) ($stmt->fetch()['cnt'] ?? 0)) > 0;
+    return $cached;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed.', 405);
@@ -33,6 +56,7 @@ $body        = getJsonBody();
 $name        = trim($body['name']        ?? '');
 $priceRaw    =       $body['price']       ?? null;
 $category    = trim($body['category']    ?? '');
+$subcategory = trim($body['subcategory'] ?? '');
 $imageInput  = trim($body['image']       ?? '');
 $sizes       = trim($body['sizes']       ?? '');
 $description = trim($body['description'] ?? '');
@@ -51,6 +75,18 @@ if ($price <= 0) {
 if (!in_array($category, ['men', 'women', 'kids'], true)) {
     jsonError('Category must be one of: men, women, kids.');
 }
+
+$subcategoryMap = [
+    'men' => ['shirts', 'trousers', 't-shirts', 'jackets', 'suits', 'hoodies', 'accessories'],
+    'women' => ['dresses', 'tops', 'trousers', 'skirts', 'scarves', 'jackets', 'accessories'],
+    'kids' => ['shirts', 'trousers', 'dresses', 'shorts', 'sweaters', 'school-wear', 'accessories'],
+];
+
+$allowedSubcategories = $subcategoryMap[$category] ?? [];
+if (!in_array($subcategory, $allowedSubcategories, true)) {
+    jsonError('Invalid subcategory for the selected category.');
+}
+
 if ($sizes === '') {
     jsonError('Available sizes are required.');
 }
@@ -113,6 +149,7 @@ if ($imageInput !== '') {
 // ---- Verify retailer still active in DB ----
 try {
     $db   = getDB();
+    $hasSubcategoryColumn = productsHasSubcategoryColumn($db);
     $stmt = $db->prepare(
         'SELECT id, shop_name FROM retailers WHERE id = :id AND is_approved = 1 LIMIT 1'
     );
@@ -126,22 +163,42 @@ try {
     $retailerName = $retailer['shop_name'];
 
     // ---- Insert product ----
-    $insert = $db->prepare(
-        'INSERT INTO products
-             (retailer_id, retailer_name, name, price, category, image_url, sizes, description)
-         VALUES
-             (:rid, :rname, :name, :price, :cat, :img, :sizes, :desc)'
-    );
-    $insert->execute([
-        'rid'   => $retailerId,
-        'rname' => $retailerName,
-        'name'  => $name,
-        'price' => $price,
-        'cat'   => $category,
-        'img'   => $imageUrl !== '' ? $imageUrl : null,
-        'sizes' => $sizes,
-        'desc'  => $description,
-    ]);
+    if ($hasSubcategoryColumn) {
+        $insert = $db->prepare(
+            'INSERT INTO products
+                 (retailer_id, retailer_name, name, price, category, subcategory, image_url, sizes, description)
+             VALUES
+                 (:rid, :rname, :name, :price, :cat, :subcategory, :img, :sizes, :desc)'
+        );
+        $insert->execute([
+            'rid'   => $retailerId,
+            'rname' => $retailerName,
+            'name'  => $name,
+            'price' => $price,
+            'cat'   => $category,
+            'subcategory' => $subcategory,
+            'img'   => $imageUrl !== '' ? $imageUrl : null,
+            'sizes' => $sizes,
+            'desc'  => $description,
+        ]);
+    } else {
+        $insert = $db->prepare(
+            'INSERT INTO products
+                 (retailer_id, retailer_name, name, price, category, image_url, sizes, description)
+             VALUES
+                 (:rid, :rname, :name, :price, :cat, :img, :sizes, :desc)'
+        );
+        $insert->execute([
+            'rid'   => $retailerId,
+            'rname' => $retailerName,
+            'name'  => $name,
+            'price' => $price,
+            'cat'   => $category,
+            'img'   => $imageUrl !== '' ? $imageUrl : null,
+            'sizes' => $sizes,
+            'desc'  => $description,
+        ]);
+    }
 
     $newId = (int) $db->lastInsertId();
 
@@ -153,6 +210,7 @@ try {
             'name'        => $name,
             'price'       => $price,
             'category'    => $category,
+            'subcategory' => $subcategory,
             'image'       => $imageUrl,
             'sizes'       => $sizes,
             'description' => $description,
