@@ -53,11 +53,13 @@ try {
              p.price,
              p.category,
              ' . ($hasSubcategoryColumn ? 'p.subcategory' : 'NULL AS subcategory') . ',
+             COALESCE(r.is_approved, 0) AS retailer_verified,
              p.image_url        AS image,
              p.sizes,
              p.description,
              UNIX_TIMESTAMP(p.posted_at) * 1000 AS timestamp
          FROM products p
+         LEFT JOIN retailers r ON r.id = p.retailer_id
          WHERE p.id = :id
          LIMIT 1'
     );
@@ -70,6 +72,7 @@ try {
 
     $product['id']        = (int)   $product['id'];
     $product['retailer_id'] = (int) $product['retailer_id'];
+    $product['retailer_verified'] = (int) $product['retailer_verified'] === 1;
     $product['price']     = (float) $product['price'];
     $product['timestamp'] = (int)   $product['timestamp'];
 

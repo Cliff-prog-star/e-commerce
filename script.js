@@ -117,6 +117,10 @@ let activeChatClientEmail = '';
 let activeChatClientName  = '';
 let chatRefreshTimer      = null;
 let clientRetailerDirectory = [];
+let buyerOrders           = [];
+let retailerOrders        = [];
+let ordersFeatureDisabled = false;
+let ordersFeatureNoticeShown = false;
 
 const SUBCATEGORY_MAP = {
     men: ['shirts', 'trousers', 't-shirts', 'jackets', 'suits', 'hoodies', 'accessories'],
@@ -155,6 +159,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     updateCartCount();
     refreshChatAccess();
     updateClientBottomNav();
+    await refreshOrderPanels();
 });
 
 function isClientLoggedIn() {
@@ -194,6 +199,7 @@ function updateClientAccessUI() {
         retailerSection?.classList.remove('section-locked');
         refreshChatAccess();
         updateClientBottomNav();
+        void refreshOrderPanels();
         return;
     }
 
@@ -210,6 +216,7 @@ function updateClientAccessUI() {
     setRetailerDashboardVisibility(false);
     refreshChatAccess();
     updateClientBottomNav();
+    void refreshOrderPanels();
 }
 
 function setRetailerDashboardVisibility(show) {
@@ -387,6 +394,7 @@ async function onClientLogin() {
         grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#b91c1c;padding:2rem;">Unable to load products right now.</p>';
     }
     refreshChatAccess();
+    await refreshOrderPanels();
 }
 
 // ───────────────────────────────────────────────
@@ -580,6 +588,23 @@ function setupEventListeners() {
         setRetailerDashboardVisibility(true);
         document.getElementById('retailer').scrollIntoView({ behavior: 'smooth' });
     });
+
+    document.addEventListener('click', async function (event) {
+        const btn = event.target.closest('[data-order-action]');
+        if (!btn) return;
+
+        const action = String(btn.getAttribute('data-order-action') || '');
+        const orderId = Number(btn.getAttribute('data-order-id') || 0);
+        if (!orderId) return;
+
+        if (action === 'confirm-delivery') {
+            await confirmOrderDelivery(orderId);
+        }
+
+        if (action === 'mark-shipped') {
+            await markOrderShipped(orderId);
+        }
+    });
     
     // Close modal when clicking outside
     window.addEventListener('click', function(event) {
@@ -728,11 +753,13 @@ function displayProducts(productsToDisplay) {
                 <span class="retailer-name">by ${escHtml(product.retailer)}</span>
                 <span class="product-category">${escHtml(product.category)}</span>
                 ${product.subcategory ? `<span class="product-category" style="margin-left:0.35rem; background:#fdebdc; color:#8f461f;">${escHtml(formatSubcategoryLabel(product.subcategory))}</span>` : ''}
-                <p class="product-sizes" style="margin-top:0.45rem; margin-bottom:0.35rem;">
-                    ${product.retailer_verified ? '✔️ Verified seller' : '⚠️ Seller pending verification'}
-                    ${product.retailer_town || product.retailer_county ? ` • 📍 ${escHtml([product.retailer_town, product.retailer_county].filter(Boolean).join(', '))}` : ''}
-                    ${product.retailer_id ? ` • ⭐ ${retailerRating(product.retailer_id)}` : ''}
-                </p>
+                <div class="trust-row">
+                    <span class="trust-badge ${product.retailer_verified ? 'verified' : 'pending'}">
+                        ${product.retailer_verified ? '✔ Verified' : '⚠ Pending'}
+                    </span>
+                    <span class="trust-badge rating">⭐ ${product.retailer_id ? retailerRating(product.retailer_id) : '4.3'}</span>
+                </div>
+                ${product.retailer_town || product.retailer_county ? `<p class="product-sizes" style="margin-bottom:0.35rem;">📍 ${escHtml([product.retailer_town, product.retailer_county].filter(Boolean).join(', '))}</p>` : ''}
                 <p class="product-description">${escHtml(product.description)}</p>
                 <p class="product-sizes"><strong>Sizes:</strong> ${escHtml(product.sizes)}</p>
                 <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
@@ -1260,18 +1287,87 @@ function clearCart() {
 }
 
 // Checkout
-function checkout() {
-    if (cart.length === 0) {
-        alert('Your cart is empty!');
+async function checkout() {
+    if (!isClientLoggedIn()) {
+        showSuccessMessage('Log in as a client to checkout.');
+        document.getElementById('client-access')?.scrollIntoView({ behavior: 'smooth' });
         return;
     }
-    
-    const total = cart.reduce((sum, item) => sum + item.price, 0);
-    alert(`Thank you for your purchase!\n\nTotal: $${total.toFixed(2)}\n\nThis is a demo - no actual payment was processed.`);
-    
-    cart = [];
-    updateCartCount();
-    closeCart();
+
+    if (cart.length === 0) {
+        showSuccessMessage('Your cart is empty.');
+        return;
+    }
+
+    const rawPhone = prompt('Enter your M-Pesa phone number (e.g. 07XXXXXXXX or 2547XXXXXXXX):', '');
+    if (rawPhone === null) {
+        return;
+    }
+
+    const normalizedPhone = normalizeMpesaPhone(rawPhone);
+    if (!normalizedPhone) {
+        showSuccessMessage('Enter a valid M-Pesa phone number.');
+        return;
+    }
+
+    const checkoutBtn = document.querySelector('#cart-modal .cart-footer .btn-primary');
+    const checkoutBtnOriginalText = checkoutBtn ? checkoutBtn.textContent : '';
+    if (checkoutBtn) {
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = 'Sending STK Push...';
+    }
+
+    try {
+        const payload = {
+            buyer_name: String(currentClient?.name || 'Client').trim() || 'Client',
+            buyer_email: String(currentClient?.email || '').toLowerCase(),
+            payment_phone: normalizedPhone,
+            items: cart.map(item => ({ product_id: Number(item.id || 0) })).filter(item => item.product_id > 0),
+        };
+
+        if (payload.items.length === 0) {
+            showSuccessMessage('Cart has invalid product items.');
+            return;
+        }
+
+        const res = await apiCall('orders/create.php', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+
+        if (res.status !== 'ok') {
+            showSuccessMessage(res.message || 'Checkout failed.');
+            return;
+        }
+
+        const createdOrders = res.data?.orders || [];
+        const total = createdOrders.reduce((sum, order) => sum + Number(order.amount || 0), 0);
+        const checkoutRequestId = String(res.data?.checkout_request_id || '');
+
+        cart = [];
+        updateCartCount();
+        closeCart();
+        await refreshOrderPanels();
+
+        showSuccessMessage(
+            `STK Push sent to ${normalizedPhone}. Check your phone, enter M-Pesa PIN, then confirm payment for $${total.toFixed(2)} (${createdOrders.length} order${createdOrders.length === 1 ? '' : 's'}).${checkoutRequestId ? ` Ref: ${checkoutRequestId}` : ''}`
+        );
+    } catch (error) {
+        showSuccessMessage(error?.message || 'Checkout failed. Please try again.');
+    } finally {
+        if (checkoutBtn) {
+            checkoutBtn.disabled = false;
+            checkoutBtn.textContent = checkoutBtnOriginalText || 'Checkout';
+        }
+    }
+}
+
+function normalizeMpesaPhone(value) {
+    const digits = String(value || '').replace(/\D+/g, '');
+    if (/^2547\d{8}$/.test(digits)) return digits;
+    if (/^07\d{8}$/.test(digits)) return `254${digits.slice(1)}`;
+    if (/^7\d{8}$/.test(digits)) return `254${digits}`;
+    return '';
 }
 
 // Show success message
@@ -1579,5 +1675,264 @@ async function sendChatMessage() {
         }
     } catch {
         showSuccessMessage('Failed to send message.');
+    }
+}
+
+function formatOrderTime(ts) {
+    const n = Number(ts || 0);
+    if (!n) return 'N/A';
+    return new Date(n).toLocaleString();
+}
+
+function renderBuyerOrders() {
+    const section = document.getElementById('buyer-orders-section');
+    const list = document.getElementById('buyer-orders-list');
+    if (!section || !list) return;
+
+    if (!isClientLoggedIn()) {
+        section.style.display = 'none';
+        list.innerHTML = '';
+        return;
+    }
+
+    section.style.display = 'block';
+
+    if (!buyerOrders.length) {
+        list.innerHTML = '<div class="order-item"><p class="order-meta">No orders yet. Complete checkout to create HELD escrow orders.</p></div>';
+        return;
+    }
+
+    list.innerHTML = buyerOrders.map(order => {
+        const paymentChipClass = order.payment_status === 'released'
+            ? 'payment-released'
+            : (order.payment_status === 'held' ? 'payment-held' : 'payment-pending');
+        const deliveryChipClass = order.delivery_status === 'delivered'
+            ? 'delivery-delivered'
+            : (order.delivery_status === 'shipped' ? 'delivery-shipped' : 'delivery-pending');
+        const canConfirm = order.payment_status === 'held' && order.delivery_status !== 'delivered';
+        const actionText = order.payment_status === 'pending'
+            ? 'Waiting for Payment Confirmation'
+            : 'Waiting for Delivery Confirmation';
+
+        return `
+            <article class="order-item">
+                <h4 class="order-title">${escHtml(order.product_name || 'Product')}</h4>
+                <p class="order-meta">Seller: ${escHtml(order.seller_name || 'Retailer')}</p>
+                <p class="order-meta">Amount: $${Number(order.amount || 0).toFixed(2)}</p>
+                <p class="order-meta">Callback: ${order.callback_confirmed ? 'Confirmed' : 'Pending'} ${order.callback_reference ? `(${escHtml(order.callback_reference)})` : ''}</p>
+                <p class="order-meta">Paid: ${escHtml(formatOrderTime(order.paid_ts))}</p>
+                <div class="order-status-row">
+                    <span class="status-chip ${paymentChipClass}">Payment: ${escHtml(String(order.payment_status || '').toUpperCase())}</span>
+                    <span class="status-chip ${deliveryChipClass}">Delivery: ${escHtml(String(order.delivery_status || '').toUpperCase())}</span>
+                </div>
+                <div class="order-actions">
+                    ${canConfirm
+                        ? `<button type="button" class="btn-order" data-order-action="confirm-delivery" data-order-id="${Number(order.id)}">Confirm Delivery</button>`
+                        : `<button type="button" class="btn-order secondary" disabled>${actionText}</button>`}
+                </div>
+            </article>
+        `;
+    }).join('');
+}
+
+function renderRetailerOrders(summary = null) {
+    const section = document.getElementById('retailer-orders-section');
+    const list = document.getElementById('retailer-orders-list');
+    if (!section || !list) return;
+
+    if (!isClientLoggedIn() || !retailerVerification.isApproved) {
+        section.style.display = 'none';
+        list.innerHTML = '';
+        return;
+    }
+
+    section.style.display = 'block';
+
+    const heldAmount = Number(summary?.held_amount || 0);
+    const releasedAmount = Number(summary?.released_amount || 0);
+
+    if (!retailerOrders.length) {
+        list.innerHTML = `
+            <div class="order-item">
+                <p class="order-meta">No buyer orders for your shop yet.</p>
+                <p class="order-meta">Held: $${heldAmount.toFixed(2)} | Released: $${releasedAmount.toFixed(2)}</p>
+            </div>
+        `;
+        return;
+    }
+
+    const summaryCard = `
+        <article class="order-item">
+            <h4 class="order-title">Escrow Wallet</h4>
+            <p class="order-meta">Held (cannot withdraw): $${heldAmount.toFixed(2)}</p>
+            <p class="order-meta">Released (withdrawable): $${releasedAmount.toFixed(2)}</p>
+        </article>
+    `;
+
+    const items = retailerOrders.map(order => {
+        const paymentChipClass = order.payment_status === 'released'
+            ? 'payment-released'
+            : (order.payment_status === 'held' ? 'payment-held' : 'payment-pending');
+        const deliveryChipClass = order.delivery_status === 'delivered'
+            ? 'delivery-delivered'
+            : (order.delivery_status === 'shipped' ? 'delivery-shipped' : 'delivery-pending');
+        const canMarkShipped = order.payment_status === 'held' && order.delivery_status === 'pending';
+
+        return `
+            <article class="order-item">
+                <h4 class="order-title">${escHtml(order.product_name || 'Product')}</h4>
+                <p class="order-meta">Buyer: ${escHtml(order.buyer_name || 'Client')} (${escHtml(order.buyer_email || '')})</p>
+                <p class="order-meta">Amount: $${Number(order.amount || 0).toFixed(2)}</p>
+                <p class="order-meta">Created: ${escHtml(formatOrderTime(order.created_ts))}</p>
+                <div class="order-status-row">
+                    <span class="status-chip ${paymentChipClass}">Payment: ${escHtml(String(order.payment_status || '').toUpperCase())}</span>
+                    <span class="status-chip ${deliveryChipClass}">Delivery: ${escHtml(String(order.delivery_status || '').toUpperCase())}</span>
+                </div>
+                <div class="order-actions">
+                    ${canMarkShipped
+                        ? `<button type="button" class="btn-order" data-order-action="mark-shipped" data-order-id="${Number(order.id)}">Mark Shipped</button>`
+                        : '<button type="button" class="btn-order secondary" disabled>Shipment Updated</button>'}
+                    ${order.can_withdraw
+                        ? '<button type="button" class="btn-order secondary" disabled>Funds Released</button>'
+                        : '<button type="button" class="btn-order secondary" disabled>Funds Still HELD</button>'}
+                </div>
+            </article>
+        `;
+    }).join('');
+
+    list.innerHTML = summaryCard + items;
+}
+
+async function loadBuyerOrders() {
+    if (ordersFeatureDisabled) {
+        buyerOrders = [];
+        renderBuyerOrders();
+        return;
+    }
+
+    if (!isClientLoggedIn()) {
+        buyerOrders = [];
+        renderBuyerOrders();
+        return;
+    }
+
+    try {
+        const email = encodeURIComponent(String(currentClient?.email || '').toLowerCase());
+        if (!email) {
+            buyerOrders = [];
+            renderBuyerOrders();
+            return;
+        }
+        const res = await apiCall(`orders/buyer_list.php?buyer_email=${email}`);
+        if (res.status !== 'ok') {
+            throw new Error(res.message || 'Failed to load buyer orders.');
+        }
+        buyerOrders = res.data?.orders || [];
+        renderBuyerOrders();
+    } catch (error) {
+        const message = String(error?.message || '');
+        if (/orders table is missing/i.test(message)) {
+            ordersFeatureDisabled = true;
+            if (!ordersFeatureNoticeShown) {
+                ordersFeatureNoticeShown = true;
+                showSuccessMessage(message);
+            }
+            buyerOrders = [];
+            renderBuyerOrders();
+            return;
+        }
+
+        buyerOrders = [];
+        renderBuyerOrders();
+        showSuccessMessage(message || 'Unable to load your orders.');
+    }
+}
+
+async function loadRetailerOrders() {
+    if (ordersFeatureDisabled) {
+        retailerOrders = [];
+        renderRetailerOrders({ held_amount: 0, released_amount: 0 });
+        return;
+    }
+
+    if (!isClientLoggedIn() || !retailerVerification.isApproved) {
+        retailerOrders = [];
+        renderRetailerOrders({ held_amount: 0, released_amount: 0 });
+        return;
+    }
+
+    try {
+        const res = await apiCall('orders/retailer_list.php');
+        if (res.status !== 'ok') {
+            throw new Error(res.message || 'Failed to load retailer orders.');
+        }
+        retailerOrders = res.data?.orders || [];
+        renderRetailerOrders(res.data?.summary || { held_amount: 0, released_amount: 0 });
+    } catch (error) {
+        const message = String(error?.message || '');
+        if (/orders table is missing/i.test(message)) {
+            ordersFeatureDisabled = true;
+            if (!ordersFeatureNoticeShown) {
+                ordersFeatureNoticeShown = true;
+                showSuccessMessage(message);
+            }
+            retailerOrders = [];
+            renderRetailerOrders({ held_amount: 0, released_amount: 0 });
+            return;
+        }
+
+        retailerOrders = [];
+        renderRetailerOrders({ held_amount: 0, released_amount: 0 });
+        showSuccessMessage(message || 'Unable to load seller payout status.');
+    }
+}
+
+async function refreshOrderPanels() {
+    await loadBuyerOrders();
+    await loadRetailerOrders();
+}
+
+async function confirmOrderDelivery(orderId) {
+    if (!isClientLoggedIn()) {
+        showSuccessMessage('Log in as a client to confirm delivery.');
+        return;
+    }
+
+    try {
+        const res = await apiCall('orders/confirm_delivery.php', {
+            method: 'POST',
+            body: JSON.stringify({
+                order_id: Number(orderId),
+                buyer_email: String(currentClient?.email || '').toLowerCase(),
+            }),
+        });
+        if (res.status !== 'ok') {
+            throw new Error(res.message || 'Could not confirm delivery.');
+        }
+        showSuccessMessage('Delivery confirmed. Funds are now RELEASED to seller.');
+        await refreshOrderPanels();
+    } catch (error) {
+        showSuccessMessage(error?.message || 'Could not confirm delivery.');
+    }
+}
+
+async function markOrderShipped(orderId) {
+    if (!isClientLoggedIn() || !retailerVerification.isApproved) {
+        showSuccessMessage('Approved retailer account required to mark shipment.');
+        return;
+    }
+
+    try {
+        const res = await apiCall('orders/mark_shipped.php', {
+            method: 'POST',
+            body: JSON.stringify({ order_id: Number(orderId) }),
+        });
+        if (res.status !== 'ok') {
+            throw new Error(res.message || 'Could not mark shipped.');
+        }
+        showSuccessMessage('Order marked as shipped. Funds remain HELD until buyer confirmation.');
+        await refreshOrderPanels();
+    } catch (error) {
+        showSuccessMessage(error?.message || 'Could not mark shipped.');
     }
 }

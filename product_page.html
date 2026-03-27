@@ -3,8 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details - FASHION HUB</title>
+    <title>Product Details - FashionHub</title>
+    <meta name="description" content="View product details, sizes, retailer trust indicators, and related clothing items on FashionHub.">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="FashionHub">
+    <link rel="canonical" href="https://fashionhub.example.com/product_page.html">
+    <meta property="og:type" content="product">
+    <meta property="og:title" content="FashionHub Product Details">
+    <meta property="og:description" content="Browse detailed product information and trusted retailer listings.">
+    <meta property="og:url" content="https://fashionhub.example.com/product_page.html">
+    <meta property="og:site_name" content="FashionHub">
+    <meta property="og:image" content="https://fashionhub.example.com/uploads/retailers/default-og.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FashionHub Product Details">
+    <meta name="twitter:description" content="Browse detailed product information and trusted retailer listings.">
+    <meta name="twitter:image" content="https://fashionhub.example.com/uploads/retailers/default-og.jpg">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="image/fashionhublogo.png">
     <style>
         .product-detail-wrapper {
             padding: 2rem 0 4rem;
@@ -273,7 +288,10 @@
     <header>
         <div class="container">
             <div class="logo">
-                <h1>👗 FASHION HUB</h1>
+                <a href="index.html" class="logo-link">
+                    <img src="image/fashionhublogo.png" alt="FashionHub Logo" class="logo-img">
+                    <span class="logo-text">FASHION HUB</span>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -366,6 +384,12 @@
             return String(str ?? '')
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function retailerRating(retailerId) {
+            const id = Number(retailerId || 0);
+            const score = 4.1 + ((id % 10) * 0.08);
+            return Math.min(4.9, score).toFixed(1);
         }
 
         function selectSize(btn, size) {
@@ -465,6 +489,10 @@
                                     </div>
                                     <span class="retailer-name">by ${escHtml(p.retailer)}</span>
                                     <span class="product-category">${escHtml(p.category)}${p.subcategory ? ` • ${escHtml(p.subcategory)}` : ''}</span>
+                                    <div class="trust-row" style="margin-top:0.5rem;">
+                                        <span class="trust-badge ${p.retailer_verified ? 'verified' : 'pending'}">${p.retailer_verified ? '✔ Verified' : '⚠ Pending'}</span>
+                                        <span class="trust-badge rating">⭐ ${retailerRating(p.retailer_id)}</span>
+                                    </div>
                                     <p class="product-description">${escHtml(p.description)}</p>
                                     <p class="product-sizes"><strong>Sizes:</strong> ${escHtml(p.sizes)}</p>
                                     <a href="product_page.html?id=${p.id}" class="btn-add-cart" style="display:block; text-align:center; text-decoration:none; padding:0.8rem; border-radius:8px;">View Details</a>
@@ -519,6 +547,10 @@
                         <h1 class="product-detail-name">${escHtml(product.name)}</h1>
                         <p class="product-detail-price">$${product.price.toFixed(2)}</p>
                         <p class="product-detail-retailer">Sold by <strong>${escHtml(product.retailer)}</strong></p>
+                        <div class="trust-row">
+                            <span class="trust-badge ${product.retailer_verified ? 'verified' : 'pending'}">${product.retailer_verified ? '✔ Verified seller' : '⚠ Verification pending'}</span>
+                            <span class="trust-badge rating">⭐ ${retailerRating(product.retailer_id)}</span>
+                        </div>
                         <span class="product-detail-category-tag">${escHtml(product.category)}${product.subcategory ? ` • ${escHtml(product.subcategory)}` : ''}</span>
                         <hr class="divider" />
                         <p class="product-detail-description">${escHtml(product.description)}</p>

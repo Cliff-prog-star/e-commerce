@@ -3,15 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FashionHub - Clothing Retailers Platform</title>
+    <title>FashionHub - African Fashion Marketplace for Retailers and Clients</title>
+    <meta name="description" content="Shop fashion from verified African clothing retailers on FashionHub. Browse men, women, and kids collections, chat with sellers, and order securely.">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="FashionHub">
+    <link rel="canonical" href="https://fashionhub.example.com/index.html">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="FashionHub - African Fashion Marketplace">
+    <meta property="og:description" content="Discover and buy fashion from verified African retailers.">
+    <meta property="og:url" content="https://fashionhub.example.com/index.html">
+    <meta property="og:site_name" content="FashionHub">
+    <meta property="og:image" content="https://fashionhub.example.com/uploads/retailers/default-og.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FashionHub - African Fashion Marketplace">
+    <meta name="twitter:description" content="Shop from verified African clothing retailers on FashionHub.">
+    <meta name="twitter:image" content="https://fashionhub.example.com/uploads/retailers/default-og.jpg">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "FashionHub",
+        "url": "https://fashionhub.example.com/",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://fashionhub.example.com/index.html?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="image/fashionhublogo.png">
 </head>
 <body>
     <!-- Header -->
     <header>
         <div class="container">
             <div class="logo">
-                <h1>👗 FASHION HUB</h1>
+                <a href="index.html" class="logo-link">
+                    <img src="image/fashionhublogo.png" alt="FashionHub Logo" class="logo-img">
+                    <span class="logo-text">FASHION HUB</span>
+                </a>
             </div>
             <nav>
                 <ul>
@@ -226,6 +257,14 @@
                     <button type="submit" class="btn-primary">Add Product</button>
                     </fieldset>
                 </form>
+
+                <div id="retailer-orders-section" class="retailer-orders-section" style="display:none;">
+                    <div class="retailer-orders-header">
+                        <h3>Seller Payout Status</h3>
+                        <p>Funds remain HELD until buyer confirms delivery.</p>
+                    </div>
+                    <div id="retailer-orders-list" class="orders-list"></div>
+                </div>
             </div>
         </div>
     </section>
@@ -268,6 +307,18 @@
                         <button type="submit" id="chat-send-btn" class="btn-primary">Send Message</button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="orders-section" id="buyer-orders-section" style="display:none;">
+        <div class="container">
+            <div class="orders-card">
+                <div class="orders-header-row">
+                    <h2>My Orders</h2>
+                    <p>Escrow demo: payment is held and only released after delivery confirmation.</p>
+                </div>
+                <div id="buyer-orders-list" class="orders-list"></div>
             </div>
         </div>
     </section>

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /backend/
+Disallow: /admin.html
+
+Sitemap: https://fashionhub.example.com/sitemap.xml

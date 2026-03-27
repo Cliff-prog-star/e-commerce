@@ -27,6 +27,8 @@ Set these environment variables on your server:
 - `ADMIN_REVIEW_KEY` (required for admin legitimacy review dashboard)
 - `SMS_PROVIDER`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`
 - `APP_NAME`, `APP_BASE_URL`, `MAIL_FROM`
+- `MPESA_CONSUMER_KEY`, `MPESA_CONSUMER_SECRET`, `MPESA_SHORTCODE`, `MPESA_PASSKEY`, `MPESA_CALLBACK_URL`
+- Optional M-Pesa tuning: `MPESA_BASE_URL`, `MPESA_TRANSACTION_TYPE`, `MPESA_ACCOUNT_REFERENCE`, `MPESA_TRANSACTION_DESC`
 
 Use `.env.example` as the reference values.
 
@@ -118,6 +120,13 @@ mysql -u <user> -p < database/schema.sql
 	- `backend/api/admin/retailers/document.php?doc_id=...&admin_key=...`
 - Product cards now display trust indicators:
 	- Verified seller badge
+
+## 12. Real Payment (M-Pesa STK)
+- Checkout now initiates a real M-Pesa STK push via `backend/api/orders/create.php`.
+- Orders are created with `payment_status=pending` until callback confirmation.
+- Callback endpoint: `backend/api/payments/mpesa_callback.php`
+- On successful callback, matching orders are moved to `payment_status=held` (escrow hold).
+- `MPESA_CALLBACK_URL` must be a public HTTPS URL that points to the callback endpoint.
 	- Seller location (county/town)
 	- Rating indicator (placeholder visual score)
 - New report API for abuse/scam reporting:
